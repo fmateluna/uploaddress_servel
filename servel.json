@@ -1,0 +1,40 @@
+{
+    "input_type": "servel_csv",
+    "input_atributes": [
+        "id",
+        "calle",
+        "numero",
+        "resto",
+        "region",
+        "comuna",
+        "region2",
+        "comuna2",
+        "TEXT_REG",
+        "TEXT_COM",
+        "localidad",
+        "direccion"
+    ],
+    "address_format": {
+        "full_address": [
+            "TEXT_REG",
+            "TEXT_COM",
+            "direccion"
+        ],
+        "house_number": [
+            "numero"
+        ],
+        "street": [
+            "resto"
+        ],
+        "commune": [
+            "TEXT_COM"
+        ],
+        "city": [
+            "localidad"
+        ],
+        "province": [
+            "TEXT_REG"
+        ]
+    },
+    "path_input": "./TEST.csv"
+}
