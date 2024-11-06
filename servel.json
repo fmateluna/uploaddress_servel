@@ -36,5 +36,5 @@
             "TEXT_REG"
         ]
     },
-    "path_input": "./TEST.csv"
+    "path_input": "./direcciones_servel1.csv"
 }

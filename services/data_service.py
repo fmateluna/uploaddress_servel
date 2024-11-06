@@ -5,7 +5,7 @@ from repositories.address_repo import save_address
 from repositories.input_request_repo import (
     insert_into_input_request,
 )
-from repositories.database import DB_CONFIG, get_db
+
 from core.models import InputType
 import json
 
