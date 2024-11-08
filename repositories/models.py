@@ -29,7 +29,7 @@ class AddressScore(Base):
 class ApiResponse(Base):
     __tablename__ = "api_response"
     id = Column(Integer, primary_key=True)
-    type_api_id = Column(Integer, ForeignKey("type_api_geocord.id", ondelete="CASCADE"))
+    type_api_id = Column(Integer)
     address_id = Column(Integer, ForeignKey("address.id"))
     attribute_name = Column(String(100))
     attribute_value = Column(Text)
