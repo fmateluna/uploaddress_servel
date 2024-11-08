@@ -1,6 +1,5 @@
 import os
 import requests
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 import time
