@@ -6,7 +6,7 @@ from repositories.input_request_repo import (
     insert_into_input_request,
 )
 
-from core.models import InputType
+from repositories.models import InputType
 import json
 
 from repositories.origin_source_repo import (
@@ -24,9 +24,9 @@ def build_address_components(address_format, row):
     valid_attributes_count = 0  # Contador para los atributos válidos encontrados
 
     for column_name, components in address_format.items():
-        component_parts = (
-            []
-        )  # Usamos una lista para preservar el orden de los componentes
+        # Usamos una lista para preservar el orden de los componentes,
+        # importante para generar direcciones unicas por dato
+        component_parts = []
         seen_values = set()  # Usamos un conjunto para evitar duplicados
         total_expected_attributes += len(
             components

@@ -11,6 +11,16 @@ DB_CONFIG = {
     "port": os.getenv("DB_PORT", "5434"),
 }
 
+# Crear el motor de SQLAlchemy
+DATABASE_URL = f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['dbname']}"
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def get_session():
+    """Función para obtener una sesión de base de datos."""
+    return SessionLocal()
+
 
 def load_query(filename):
     # Ruta completa al archivo de consulta SQL
