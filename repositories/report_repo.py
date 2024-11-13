@@ -1,7 +1,5 @@
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-
 from repositories.database import get_session
+from sqlalchemy import create_engine, text
 
 
 def fetch_address_details(address_value):
@@ -38,9 +36,9 @@ def fetch_address_details(address_value):
     with get_session() as session:
         result = session.execute(query, {"address_value": address_value}).fetchone()
 
-    # Convertir el resultado en un diccionario
+    # Si obtenemos un resultado, lo convertimos en un diccionario
     if result:
-        result_dict = dict(result)
+        result_dict = dict(result._asdict())  # Convierte el resultado a diccionario
         return result_dict
     else:
         return None
