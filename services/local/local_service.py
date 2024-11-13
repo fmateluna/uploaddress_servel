@@ -40,11 +40,17 @@ def build_address_components(address_format, row):
                 key = str(part).lower()
                 component_value = str(row.get(key, "")).strip()
 
+            if component_value.replace(".", "", 1).isdigit():
+                float_value = float(component_value)
+                if float_value.is_integer():
+                    component_value = str(int(float_value))
+
             # Ignora valores vacíos o nulos (NULL, NaN)
             if (
                 component_value.lower() not in {"null", "nan", "s/n", ""}
                 and component_value not in seen_values
             ):
+                component_value = component_value.title()
                 component_parts.append(component_value)
                 seen_values.add(component_value)
                 valid_attributes_count += (

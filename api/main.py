@@ -26,6 +26,20 @@ async def get_geolocation(api_name: str, address: str):
         )
 
 
+@router.get("/info/")
+async def get_geolocation(address: str):
+    try:
+        data_service = DataService()
+        result = data_service.get_all_info_from_address(address)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail="Error en la solicitud a la API externa"
+        )
+
+
 app = FastAPI()
 app.include_router(router)
 

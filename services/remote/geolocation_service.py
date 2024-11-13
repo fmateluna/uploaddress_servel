@@ -1,4 +1,11 @@
+from repositories.models import Address
 from services.remote.geo_factory import GeoAPIFactory
+
+
+class GeoResponse:
+    def __init__(self) -> None:
+        address = Address()
+        self.address = address
 
 
 class GeolocationService:

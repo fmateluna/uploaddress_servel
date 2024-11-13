@@ -26,22 +26,22 @@ class AddressScore(Base):
 
 
 # tabla para guardar el request y response de cada API de geolocalización
-class ApiResponse(Base):
-    __tablename__ = "api_response"
+class ApiResponseValues(Base):
+    __tablename__ = "api_response_values"
     id = Column(Integer, primary_key=True)
     type_api_id = Column(Integer)
+    api_logs_id = Column(Integer)
     address_id = Column(Integer, ForeignKey("address.id"))
     attribute_name = Column(String(100))
     attribute_value = Column(Text)
-    created_at = Column(DateTime, default=func.now())
 
 
 # tabla para registrar logs de entrada y salida de las APIs de geolocalización
 class ApiLogs(Base):
     __tablename__ = "api_logs"
     id = Column(Integer, primary_key=True)
-    api_response_id = Column(Integer, ForeignKey("api_response.id", ondelete="CASCADE"))
     address_id = Column(Integer, ForeignKey("address.id", ondelete="CASCADE"))
+    type_api_id = Column(Integer)
     request_payload = Column(JSON)  # Guardar la solicitud como JSON
     response_payload = Column(JSON)  # Guardar la respuesta como JSON
     created_at = Column(DateTime, default=func.now())

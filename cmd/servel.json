@@ -16,9 +16,11 @@
     ],
     "address_format": {
         "full_address": [
-            "TEXT_REG",
+            "calle",
+            "numero",
             "TEXT_COM",
-            "direccion"
+            "TEXT_REG",
+            "'Chile'"
         ],
         "house_number": [
             "numero"
@@ -36,5 +38,5 @@
             "TEXT_REG"
         ]
     },
-    "path_input": "./TEST.csv"
+    "path_input": "./direcciones_servel1.csv"
 }
