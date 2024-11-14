@@ -54,32 +54,6 @@ class AddressRepository:
     def __init__(self, db_session: Session):
         self.db_session = db_session
 
-    def save_geolocation(self, geolocation_data: dict):
-        """Guarda datos de geolocalización en la tabla Address."""
-        address = Address(
-            full_address=geolocation_data.get("formatted_address"),
-            normalized_address=geolocation_data.get("normalized_address"),
-            input_type_id=geolocation_data.get("input_type_id"),
-            ip_address=geolocation_data.get("ip_address"),
-            house_number=geolocation_data.get("house_number"),
-            street=geolocation_data.get("street"),
-            neighbourhood=geolocation_data.get("neighbourhood"),
-            sector=geolocation_data.get("sector"),
-            commune=geolocation_data.get("commune"),
-            city=geolocation_data.get("city"),
-            province=geolocation_data.get("province"),
-            region=geolocation_data.get("region"),
-            postal_code=geolocation_data.get("postal_code"),
-            country=geolocation_data.get("country", "Chile"),
-            latitude=geolocation_data.get("latitude"),
-            longitude=geolocation_data.get("longitude"),
-            last_update=datetime.now(),
-        )
-
-        self.db_session.add(address)
-        self.db_session.commit()
-        return address.id
-
     def get_address_by_id(self, address_id: int):
         """Recupera una dirección de la tabla Address por su ID."""
         return self.db_session.query(Address).filter(Address.id == address_id).first()

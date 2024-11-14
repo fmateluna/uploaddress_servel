@@ -1,3 +1,4 @@
+import asyncio
 import pandas as pd
 from repositories.address_score_repo import insert_or_update_address_score
 from repositories.input_type_repo import get_or_create_input_type
@@ -13,6 +14,10 @@ from repositories.origin_source_repo import (
     insert_origin_source,
     link_address_to_origin_source,
 )
+from services.remote.data_service import DataService
+
+
+data_service = DataService()
 
 
 # build_address_components = Construir los componentes de dirección
@@ -98,6 +103,8 @@ def process_csv(config_path):
     for _, row in data.iterrows():
         address_data, score = build_address_components(address_format, row)
 
+        address_data["api_flag"] = int(score) > 50
+
         print("[!] Calidad del dato :", score)
 
         # Generar columnas y valores dinámicamente en función de los datos disponibles en address_data
@@ -130,6 +137,14 @@ def process_csv(config_path):
                 # Acá invocar a APIS para a partir de address_id enviar consultas a API
             else:
                 print("[" + address_data["full_address"] + "]  is OK \n")
+
+            if int(score) > 50:
+                asyncio.run(
+                    data_service.generate_info_address(
+                        address_data["full_address"], "127.0.0.1"
+                    )
+                )
+                print("[" + address_data["full_address"] + "]  process api coords \n")
 
         except Exception as e:
             print("Error:", e)

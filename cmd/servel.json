@@ -25,7 +25,7 @@
         "house_number": [
             "numero"
         ],
-        "street": [
+        "complements": [
             "resto"
         ],
         "commune": [
@@ -38,5 +38,5 @@
             "TEXT_REG"
         ]
     },
-    "path_input": "./direcciones_servel1.csv"
+    "path_input": "./500.csv"
 }

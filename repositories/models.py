@@ -61,12 +61,11 @@ class Address(Base):
     __tablename__ = "address"
     id = Column(Integer, primary_key=True)
     full_address = Column(Text, nullable=False)
-    normalized_address = Column(Text)
     input_type_id = Column(Integer, ForeignKey("input_type.id"))
     created_at = Column(DateTime, default=func.now())
     ip_address = Column(INET)
     house_number = Column(String(50))
-    street = Column(String(100))
+    complements = Column(String(100))
     neighbourhood = Column(String(100))
     sector = Column(String(100))
     commune = Column(String(100))
@@ -75,8 +74,6 @@ class Address(Base):
     region = Column(String(100))
     postal_code = Column(String(20))
     country = Column(String(100), default="Chile")
-    latitude = Column(Numeric(9, 6))
-    longitude = Column(Numeric(9, 6))
     last_update = Column(DateTime)
 
 

@@ -108,6 +108,7 @@ class GoogleMapsAPI:
                 if not address_record:
                     address_record = Address(full_address=full_address)
                     self.session.add(address_record)
+                    self.session.flush()
 
                 # Registrar en la tabla `AddressScore`
                 address_score = AddressScore(
