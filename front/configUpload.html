@@ -7,6 +7,53 @@
     <title>Mapeador CSV</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        /* Estilos para el overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            /* Fondo oscuro semitransparente */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            /* Asegura que el overlay esté por encima de todo */
+        }
+
+        /* Estilo del mensaje dentro del overlay */
+        .message {
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            max-width: 400px;
+            width: 80%;
+        }
+
+        .success {
+            background-color: #28a745;
+            /* Verde */
+            color: white;
+        }
+
+        .error {
+            background-color: #dc3545;
+            /* Rojo */
+            color: white;
+        }
+
+
+        .error {
+            background-color: #dc3545;
+            /* Rojo */
+            color: white;
+        }
+
         .drop-area.drag-over {
             border-color: #007bff;
             background-color: #cce5ff;
@@ -51,7 +98,7 @@
             /* Color de los valores del JSON */
         }
 
-        .scrollable-mapping {
+        .scrollable-address_format {
             max-height: 600px;
             /* Altura máxima permitida */
             overflow-y: auto;
@@ -130,7 +177,7 @@
                         <div class="input-group">
                             <input type="text" id="newColumn" class="form-control"
                                 placeholder="Ingrese nombre de la columna">
-                            <button class="btn btn-primary" id="addColumnButton" disabled>Agregar columna</button>
+                            <button class="btn btn-primary" id="addColumnButton">Agregar columna</button>
                         </div>
                     </div>
                     <div class="drag-area" id="csvColumns">
@@ -146,11 +193,11 @@
 
                 <!-- Sección para mapear a la tabla Address -->
                 <div class="col-md-8">
-                    <h5>Address Mapping</h5>
+                    <h5>Address address_format</h5>
                     <div id="message-container"
                         style="position: fixed; top: 20px; right: 20px; z-index: 1000; display: none; background-color: #f44336; color: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); font-size: 14px;">
                     </div>
-                    <div id="addressMapping" class="scrollable-mapping">
+                    <div id="addressMapping" class="scrollable-address_format">
                         <!-- Mapeo de direcciones, como en el código original -->
                         <div class="mb-3">
                             <strong>full_address</strong><small id="result_full_address"></small>
@@ -212,7 +259,8 @@
                     <div class="mb-3">
                         <button class="btn btn-success mt-3" style="display:none" id="saveButton">SAVE INPUT
                             TYPE</button>
-                        <button class="btn btn-success mt-3" id="saveButton">Cargar direcciones</button>
+                        <button class="btn btn-success mt-3" id="saveButton" onclick="sendCSV()">Cargar
+                            direcciones</button>
                     </div>
                 </div>
             </div>
@@ -229,7 +277,79 @@
         var csvJson;
         var payload;
 
+        function showMessageOK(messageData, type) {
+            // Crear un overlay que cubra toda la página o el formulario
+            const overlay = document.createElement('div');
+            overlay.classList.add('overlay');  // Clase para el overlay
+            document.body.appendChild(overlay);
 
+            // Crear el contenedor del mensaje
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('message', type); // Añadir las clases 'message' y 'success' o 'error'
+
+
+            const reportId = messageData.id;
+
+            // Crear el enlace para el reporte
+            const reportLink = document.createElement('a');
+            reportLink.href = `/geo/upload/report/${reportId}`; // URL dinámica
+            reportLink.textContent = 'VER REPORTE'; // Texto del enlace
+
+            // Insertar el mensaje y el enlace dentro del contenedor
+            messageContainer.innerHTML = `${messageData.message} - `;
+            messageContainer.appendChild(reportLink);
+
+            // Colocar el mensaje dentro del overlay en el centro
+            overlay.appendChild(messageContainer);
+
+            // Deshabilitar todos los inputs, botones, select, textarea
+            const inputs = document.querySelectorAll('input, button, select, textarea');
+            inputs.forEach(input => {
+                input.disabled = true;  // Deshabilitar el input
+            });
+
+        }
+
+
+
+        async function sendCSV(event) {
+
+            // Obtener los archivos
+            const csvFile = document.getElementById('csvFile').files[0];  // CSV
+
+            var configJSON = refreshInputValues();
+
+            const jsonFile = new Blob([JSON.stringify(configJSON)], { type: 'application/json' });  // Crear Blob para JSON
+
+            // Verificar si ambos archivos están presentes
+            if (!csvFile || !jsonFile) {
+                showMessage("Por favor, asegúrate de seleccionar un archivo CSV y que el JSON esté disponible.");
+                return;
+            }
+
+            // Crear un FormData para enviar ambos archivos
+            const formData = new FormData();
+            formData.append('csv_file', csvFile);
+            formData.append('json_file', jsonFile);
+
+            try {
+                // Enviar la solicitud POST con los archivos al endpoint
+                const response = await fetch('/process_csv/', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    showMessageOK(result);
+                } else {
+                    showMessage(`Error: ${result.detail}`);
+                }
+            } catch (error) {
+                console.error('Error al enviar los archivos:', error);
+                showMessage('Hubo un error al procesar los archivos');
+            }
+        };
 
         function csvToJSON(csv) {
             const lines = csv.trim().split('\n');
@@ -252,37 +372,50 @@
 
 
         function refreshInputValues() {
-            const inputType = document.getElementById('inputType').value;
-            const mapping = {};
+            const inputType = "UPLOAD WEB";//document.getElementById('inputType').value;
+            const address_format = {};
 
             dropAreas.forEach(area => {
                 const column = area.dataset.column;
                 const items = area.querySelectorAll('.drag-item');
-                mapping[column] = Array.from(items).map(item => item.textContent);
+                address_format[column] = Array.from(items).map(item => item.textContent);
                 var small_result = document.getElementById("result_" + column);
                 if (small_result != null && csvJson != null) {
                     small_result.textContent = " "
-                    mapping[column].forEach(item => {
+                    var index = 0
+                    address_format[column].forEach(item => {
                         var value = ""
                         if (JSON.parse(csvJson)[0][item] == undefined) {
                             value = item + " "
+                            address_format[column][index] = "'" + item + "'"
                         } else {
                             value = JSON.parse(csvJson)[0][item] + " ";
                         }
                         small_result.textContent += value
-
+                        index++
                     })
 
                 }
 
             });
 
+            var filterColumn = []
+
+            Array.from(document.querySelectorAll('#csvColumns .drag-item'))
+                .map(item => {
+                    if (item.lang != "Nuevo") {
+                        filterColumn.push(item.textContent)
+                    }
+                });
+
             const payload = {
-                input_type_id: inputType,
-                mapping: mapping
+                input_type: inputType,
+                address_format: address_format,
+                input_atributes: filterColumn,
+                path_input: "web"
             };
             const jsonOutput = document.getElementById('json-output');
-            jsonOutput.textContent = JSON.stringify(payload, null, 2);
+            jsonOutput.textContent = JSON.stringify(address_format, null, 2);
             return payload;
         }
 
@@ -297,7 +430,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(response => response.json())
-                .then(data => alert('Configuration saved successfully!'))
+                .then(data => showMessage('Configuration saved successfully!'))
                 .catch(err => console.error(err));
         });
 
@@ -372,6 +505,7 @@
                 newColumn.textContent = columnName;
 
                 // Establecer el fondo verde
+                newColumn.lang = "Nuevo"
                 newColumn.style.backgroundColor = '#4caf50'; // Color verde
                 newColumn.style.color = 'white'; // Texto blanco para contraste
                 newColumn.style.padding = '5px'; // Opcional, para mejorar el estilo

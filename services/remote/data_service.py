@@ -3,7 +3,7 @@ from fastapi.encoders import jsonable_encoder
 from repositories.address_repo import AddressRepository
 from repositories.database import get_session
 from repositories.models import Address
-from repositories.report_repo import fetch_address_details
+from repositories.report_repo import fetch_address_details, fetch_report_by_process_id
 from services.remote.geolocation_service import GeolocationService
 
 
@@ -71,3 +71,13 @@ class DataService:
             return {
                 "message": "No se encontraron datos para la dirección especificada."
             }
+            
+    def report(self, process_id: str):
+        result = fetch_report_by_process_id(process_id)
+        if result:
+            # Convertir el diccionario a un formato JSON serializable
+            return jsonable_encoder(result)
+        else:
+            return {
+                "message": "No se encontraron datos para la dirección especificada."
+            }            
