@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapeador CSV</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .drop-area.drag-over {
+            border-color: #007bff;
+            background-color: #cce5ff;
+        }
+
+        .disabled {
+            pointer-events: none;
+            opacity: 0.5;
+            user-select: none;
+        }
+
+
+        /* Estilo general para el área del JSON con aspecto de terminal */
+        #json-output {
+            background-color: #2e2e2e;
+            /* Fondo oscuro */
+            color: #f5f5f5;
+            /* Texto claro */
+            font-family: 'Courier New', Courier, monospace;
+            /* Tipografía monoespaciada */
+            padding: 20px;
+            /* Espaciado interno */
+            border-radius: 5px;
+            /* Bordes redondeados */
+            border: 1px solid #444;
+            /* Borde oscuro */
+            overflow-x: auto;
+            /* Permite desplazamiento horizontal si es necesario */
+            white-space: pre-wrap;
+            /* Asegura que el texto se ajuste en lugar de desbordar */
+            word-wrap: break-word;
+            /* Rompe palabras largas para evitar desbordamiento */
+            font-size: 14px;
+            /* Tamaño de fuente adecuado */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            /* Sombra sutil para darle profundidad */
+        }
+
+        /* Puedes agregar un estilo para cuando el contenido se actualiza */
+        #json-output code {
+            color: #ffcc00;
+            /* Color de los valores del JSON */
+        }
+
+        .scrollable-mapping {
+            max-height: 600px;
+            /* Altura máxima permitida */
+            overflow-y: auto;
+            /* Activa el desplazamiento vertical */
+            border: 1px solid #ccc;
+            /* Opcional: bordes para delimitar */
+            padding: 10px;
+            /* Espaciado interno */
+            background-color: #f9f9f9;
+            /* Opcional: color de fondo */
+            border-radius: 5px;
+            /* Bordes redondeados */
+        }
+
+        .drag-area {
+            border: 2px dashed #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            min-height: 100px;
+            background-color: #f9f9f9;
+        }
+
+        .drag-item {
+            background-color: #e9ecef;
+            border: 1px solid #ccc;
+            padding: 5px 10px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: grab;
+            display: inline-block;
+            /* Asegura que el elemento no se apile */
+        }
+
+        .drop-area {
+            border: 2px solid #ccc;
+            padding: 10px;
+            min-height: 50px;
+            background-color: #eaf4fc;
+            display: flex;
+            /* Flexbox para disposición horizontal */
+            flex-wrap: wrap;
+            /* Permite que los elementos bajen a la siguiente fila si no caben */
+            gap: 5px;
+            /* Espaciado entre los elementos */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Mapeador de carga CSV</h1>
+
+        <!-- Dropdown para seleccionar el tipo de Input -->
+        <div class="mb-3" style="display:none">
+            <h5>Input Type</h5>
+            <select id="inputType" class="form-select">
+                <option selected>Seleccione un tipo</option>
+                <option value="1">Archivo Servel</option>
+                <option value="2">Otro tipo</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <strong for="csvFile" class="form-strong">Cargar archivo CSV</strong>
+            <input type="file" id="csvFile" class="form-control" accept=".csv">
+        </div>
+
+        <!-- Input para agregar nuevas columnas -->
+        <span id="step2" class="disabled">
+            <div class="row">
+                <!-- Sección de columnas del CSV -->
+                <div class="col-md-4">
+                    <h5>Columnas que existen en el CSV</h5>
+                    <div class="mb-3">
+                        <strong for="newColumn" class="form-strong">Agregar nueva columna</strong>
+                        <div class="input-group">
+                            <input type="text" id="newColumn" class="form-control"
+                                placeholder="Ingrese nombre de la columna">
+                            <button class="btn btn-primary" id="addColumnButton" disabled>Agregar columna</button>
+                        </div>
+                    </div>
+                    <div class="drag-area" id="csvColumns">
+                        <div class="drag-item" draggable="true">id</div>
+                        <div class="drag-item" draggable="true">nombre_via_txt</div>
+                        <div class="drag-item" draggable="true">nro</div>
+                        <div class="drag-item" draggable="true">resto</div>
+                        <div class="drag-item" draggable="true">region</div>
+                        <div class="drag-item" draggable="true">comuna</div>
+                    </div>
+                    <pre id="json-output"></pre>
+                </div>
+
+                <!-- Sección para mapear a la tabla Address -->
+                <div class="col-md-8">
+                    <h5>Address Mapping</h5>
+                    <div id="message-container"
+                        style="position: fixed; top: 20px; right: 20px; z-index: 1000; display: none; background-color: #f44336; color: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); font-size: 14px;">
+                    </div>
+                    <div id="addressMapping" class="scrollable-mapping">
+                        <!-- Mapeo de direcciones, como en el código original -->
+                        <div class="mb-3">
+                            <strong>full_address</strong><small id="result_full_address"></small>
+                            <div class="drop-area" data-column="full_address"></div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>house_number</strong><small id="result_house_number"></small>
+                            <div class="drop-area" data-column="house_number"></div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>complements</strong><small id="result_complements"></small>
+                            <div class="drop-area" data-column="complements"></div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>neighbourhood</strong><small id="result_neighbourhood"></small>
+                            <div class="drop-area" data-column="neighbourhood"></div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>sector</strong><small id="result_sector"></small>
+                            <div class="drop-area" data-column="sector"></div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>commune</strong><small id="result_commune"></small>
+                            <div class="drop-area" data-column="commune"></div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>city</strong><small id="result_city"></small>
+                            <div class="drop-area" data-column="city"></div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>province</strong><small id="result_province"></small>
+                            <div class="drop-area" data-column="province"></div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>region</strong><small id="result_region"></small>
+                            <div class="drop-area" data-column="region"></div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>postal_code</strong><small id="result_postal_codes"></small>
+                            <div class="drop-area" data-column="postal_code"></div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>country</strong><small id="result_country"></small>
+                            <div class="drop-area" data-column="country"></div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>latitude</strong><small id="result_latitude"></small>
+                            <div class="drop-area" data-column="latitude"></div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>longitude</strong><small id="result_longitude"></small>
+                            <div class="drop-area" data-column="longitude"></div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="col-md-8">
+
+                    <div class="mb-3">
+                        <button class="btn btn-success mt-3" style="display:none" id="saveButton">SAVE INPUT
+                            TYPE</button>
+                        <button class="btn btn-success mt-3" id="saveButton">Cargar direcciones</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones -->
+        </span>
+
+
+
+    </div>
+
+    <script>
+
+        var csvJson;
+        var payload;
+
+
+
+        function csvToJSON(csv) {
+            const lines = csv.trim().split('\n');
+            const headers = lines[0].split(','); // Primer fila: encabezados de columnas
+            const values = lines[1].split(','); // Segunda fila: los valores
+
+            const jsonObj = {};
+            headers.forEach((header, index) => {
+                jsonObj[header] = values[index];
+            });
+
+            return [jsonObj]; // Retorna el objeto JSON dentro de un arreglo
+        }
+
+        function displayJSON(jsonData) {
+            csvJson = JSON.stringify(jsonData, null, 2)
+
+            console.log(csvJson);
+        }
+
+
+        function refreshInputValues() {
+            const inputType = document.getElementById('inputType').value;
+            const mapping = {};
+
+            dropAreas.forEach(area => {
+                const column = area.dataset.column;
+                const items = area.querySelectorAll('.drag-item');
+                mapping[column] = Array.from(items).map(item => item.textContent);
+                var small_result = document.getElementById("result_" + column);
+                if (small_result != null && csvJson != null) {
+                    small_result.textContent = " "
+                    mapping[column].forEach(item => {
+                        var value = ""
+                        if (JSON.parse(csvJson)[0][item] == undefined) {
+                            value = item + " "
+                        } else {
+                            value = JSON.parse(csvJson)[0][item] + " ";
+                        }
+                        small_result.textContent += value
+
+                    })
+
+                }
+
+            });
+
+            const payload = {
+                input_type_id: inputType,
+                mapping: mapping
+            };
+            const jsonOutput = document.getElementById('json-output');
+            jsonOutput.textContent = JSON.stringify(payload, null, 2);
+            return payload;
+        }
+
+        document.getElementById('saveButton').addEventListener('click', () => {
+            var payload = freshInputValues();
+
+            console.log('Configuration JSON:', payload);
+
+            // Aquí puedes enviar los datos al backend
+            fetch('/save-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(response => response.json())
+                .then(data => alert('Configuration saved successfully!'))
+                .catch(err => console.error(err));
+        });
+
+        document.getElementById('csvFile').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const csvContent = e.target.result;
+                        const jsonResult = csvToJSON(csvContent);
+                        displayJSON(jsonResult);
+                    };
+                    reader.readAsText(file);
+
+                    const content = e.target.result;
+                    const rows = content.split('\n');
+                    const headerRow = rows[0]; // Primera fila (encabezados)
+                    const columns = headerRow.split(',');
+
+                    const csvColumnsContainer = document.getElementById('csvColumns');
+                    csvColumnsContainer.innerHTML = ''; // Limpiar columnas anteriores
+
+                    columns.forEach(column => {
+                        if (column.trim()) {
+                            const columnElement = document.createElement('div');
+                            columnElement.className = 'drag-item';
+                            columnElement.draggable = true;
+                            columnElement.textContent = column.trim();
+
+                            // Añadir eventos de arrastrar
+                            columnElement.addEventListener('dragstart', () => {
+                                columnElement.classList.add('dragging');
+                            });
+
+                            columnElement.addEventListener('dragend', () => {
+                                columnElement.classList.remove('dragging');
+                            });
+
+                            csvColumnsContainer.appendChild(columnElement);
+                        }
+                    });
+                };
+                reader.readAsText(file);
+                document.getElementById('step2').classList.remove('disabled');
+            }
+        });
+
+        document.getElementById('addColumnButton').addEventListener('click', () => {
+
+            const newColumn = document.getElementById('newColumn').value.trim();
+            const existingColumns = Array.from(document.querySelectorAll('#csvColumns .drag-item'))
+                .map(item => item.textContent);
+
+            if (!newColumn) {
+                showMessage('El nombre de la columna no puede estar vacío.');
+                return;
+            }
+            if (existingColumns.includes(newColumn)) {
+                showMessage('Esta columna ya existe.');
+                return;
+            }
+
+            const newColumnInput = document.getElementById('newColumn');
+            const columnName = newColumnInput.value.trim();
+            if (columnName) {
+                const newColumn = document.createElement('div');
+                newColumn.className = 'drag-item';
+                newColumn.draggable = true;
+                newColumn.textContent = columnName;
+
+                // Establecer el fondo verde
+                newColumn.style.backgroundColor = '#4caf50'; // Color verde
+                newColumn.style.color = 'white'; // Texto blanco para contraste
+                newColumn.style.padding = '5px'; // Opcional, para mejorar el estilo
+                newColumn.style.borderRadius = '4px'; // Opcional, bordes redondeados
+
+                // Add drag event listeners
+                newColumn.addEventListener('dragstart', () => {
+                    newColumn.classList.add('dragging');
+                });
+
+                newColumn.addEventListener('dragend', () => {
+                    newColumn.classList.remove('dragging');
+                });
+
+                document.getElementById('csvColumns').appendChild(newColumn);
+                newColumnInput.value = ''; // Clear input
+            }
+        });
+
+        // Drag and drop functionality
+        const dragItems = document.querySelectorAll('.drag-item');
+        // Seleccionar todas las áreas de destino
+        const dropAreas = document.querySelectorAll('.drop-area');
+
+        // Añadir eventos de arrastrar y soltar a cada área
+        dropAreas.forEach(area => {
+            area.addEventListener('dragover', event => {
+                event.preventDefault(); // Permitir el drop
+                area.classList.add('drag-over');
+            });
+
+            area.addEventListener('dragleave', () => {
+                area.classList.remove('drag-over');
+            });
+
+            area.addEventListener('drop', event => {
+                event.preventDefault();
+                area.classList.remove('drag-over');
+
+                const draggedItem = document.querySelector('.drag-item.dragging');
+                if (draggedItem) {
+                    const currentDropArea = draggedItem.closest('.drop-area');
+                    if (currentDropArea && currentDropArea !== area) {
+                        showMessage("No puedes mover elementos entre áreas de destino."); // Mostrar mensaje sutil            
+                        return; // Cancelar la operación
+                    }
+
+                    // Añadir el ítem arrastrado a la zona de destino
+                    area.appendChild(draggedItem.cloneNode(true));
+                    enableDoubleClickDelete();
+                    refreshInputValues(); // Actualizar el JSON dinámico
+                }
+            });
+        });
+
+        // Añadir eventos de inicio y fin de arrastre a los elementos
+        const draggableItems = document.querySelectorAll('.drag-item');
+        draggableItems.forEach(item => {
+            item.addEventListener('dragstart', () => {
+                item.classList.add('dragging');
+                enableDoubleClickDelete();
+            });
+
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+                enableDoubleClickDelete();
+            });
+        });
+
+
+
+        function enableDoubleClickDelete() {
+            const dropItems = document.querySelectorAll('.drop-area .drag-item');
+            dropItems.forEach(item => {
+                item.addEventListener('dblclick', () => {
+                    item.remove(); // Elimina el elemento
+                    refreshInputValues(); // Actualiza el JSON dinámico
+                });
+            });
+        }
+
+        function showMessage(text, duration = 3000) {
+            const messageContainer = document.getElementById('message-container');
+            messageContainer.textContent = text;
+            messageContainer.style.display = 'block';
+            messageContainer.style.opacity = '1';
+
+            // Desvanecer después de un tiempo
+            setTimeout(() => {
+                messageContainer.style.transition = 'opacity 1s';
+                messageContainer.style.opacity = '0';
+            }, duration - 1000);
+
+            // Ocultar completamente después de la animación
+            setTimeout(() => {
+                messageContainer.style.display = 'none';
+                messageContainer.style.opacity = '1'; // Restaurar opacidad para la próxima vez
+                messageContainer.style.transition = 'none'; // Eliminar la transición
+            }, duration);
+        }
+
+
+    </script>
+</body>
+
+</html>

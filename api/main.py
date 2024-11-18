@@ -3,6 +3,10 @@ from pydantic import BaseModel
 from typing import Any, Dict
 import sys
 import os
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from services.remote.data_service import DataService
@@ -10,6 +14,9 @@ from services.remote.data_service import DataService
 # Crear el router y la instancia de DataService
 router = APIRouter()
 data_service = DataService()
+
+# Usar pathlib para obtener una ruta relativa
+FRONTEND_PATH = Path(__file__).resolve().parent / "../front"
 
 
 # Modelo para la respuesta de error
@@ -78,9 +85,21 @@ async def create_info(request: Request, address: str):
         )
 
 
+# Endpoint para servir configUpload.html
+@router.get("/geo/upload/config", response_class=HTMLResponse)
+async def upload_config():
+    html_file_path = FRONTEND_PATH / "configUpload.html"
+    with open(html_file_path, "r", encoding="utf-8") as f:
+        html_content = f.read()
+    return HTMLResponse(content=html_content, status_code=200)
+
+
 # Configurar la aplicación principal
 app = FastAPI()
 app.include_router(router)
+
+# Montar la carpeta 'front' como recursos estáticos
+app.mount("/static", StaticFiles(directory=FRONTEND_PATH), name="static")
 
 # Iniciar el servidor si se ejecuta como un script
 if __name__ == "__main__":

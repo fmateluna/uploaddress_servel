@@ -30,4 +30,4 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    main(args.definition)  # Asegúrate de pasar 'args.definition'
+    main(args.definition)

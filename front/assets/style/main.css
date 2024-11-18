@@ -1,0 +1,78 @@
+/* Estilo general para el área del JSON con aspecto de terminal */
+#json-output {
+    background-color: #2e2e2e;
+    /* Fondo oscuro */
+    color: #f5f5f5;
+    /* Texto claro */
+    font-family: 'Courier New', Courier, monospace;
+    /* Tipografía monoespaciada */
+    padding: 20px;
+    /* Espaciado interno */
+    border-radius: 5px;
+    /* Bordes redondeados */
+    border: 1px solid #444;
+    /* Borde oscuro */
+    overflow-x: auto;
+    /* Permite desplazamiento horizontal si es necesario */
+    white-space: pre-wrap;
+    /* Asegura que el texto se ajuste en lugar de desbordar */
+    word-wrap: break-word;
+    /* Rompe palabras largas para evitar desbordamiento */
+    font-size: 14px;
+    /* Tamaño de fuente adecuado */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    /* Sombra sutil para darle profundidad */
+}
+
+/* Puedes agregar un estilo para cuando el contenido se actualiza */
+#json-output code {
+    color: #ffcc00;
+    /* Color de los valores del JSON */
+}
+
+.scrollable-mapping {
+    max-height: 400px;
+    /* Altura máxima permitida */
+    overflow-y: auto;
+    /* Activa el desplazamiento vertical */
+    border: 1px solid #ccc;
+    /* Opcional: bordes para delimitar */
+    padding: 10px;
+    /* Espaciado interno */
+    background-color: #f9f9f9;
+    /* Opcional: color de fondo */
+    border-radius: 5px;
+    /* Bordes redondeados */
+}
+
+.drag-area {
+    border: 2px dashed #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    min-height: 100px;
+    background-color: #f9f9f9;
+}
+
+.drag-item {
+    background-color: #e9ecef;
+    border: 1px solid #ccc;
+    padding: 5px 10px;
+    margin: 5px;
+    border-radius: 3px;
+    cursor: grab;
+    display: inline-block;
+    /* Asegura que el elemento no se apile */
+}
+
+.drop-area {
+    border: 2px solid #ccc;
+    padding: 10px;
+    min-height: 50px;
+    background-color: #eaf4fc;
+    display: flex;
+    /* Flexbox para disposición horizontal */
+    flex-wrap: wrap;
+    /* Permite que los elementos bajen a la siguiente fila si no caben */
+    gap: 5px;
+    /* Espaciado entre los elementos */
+}
