@@ -352,16 +352,28 @@
         };
 
         function csvToJSON(csv) {
-            const lines = csv.trim().split('\n');
-            const headers = lines[0].split(','); // Primer fila: encabezados de columnas
-            const values = lines[1].split(','); // Segunda fila: los valores
+            // Limpieza inicial del contenido del CSV
+            const lines = csv.trim().split('\n'); // Divide el CSV en líneas
+            if (lines.length < 2) {
+                throw new Error("El archivo CSV debe tener al menos una fila de encabezados y una fila de datos.");
+            }
 
+            // Limpia encabezados y valores, eliminando espacios adicionales
+            const headers = lines[0].split(',').map(header => header.trim()); // Primera fila: encabezados
+            const values = lines[1].split(',').map(value => value.trim()); // Segunda fila: valores
+
+            // Asegura que el número de columnas coincida entre los encabezados y los valores
+            while (values.length < headers.length) {
+                values.push(''); // Rellena columnas faltantes con valores vacíos
+            }
+
+            // Crea el objeto JSON
             const jsonObj = {};
             headers.forEach((header, index) => {
-                jsonObj[header] = values[index];
+                jsonObj[header] = values[index] || ''; // Asigna un valor vacío si no existe un dato
             });
 
-            return [jsonObj]; // Retorna el objeto JSON dentro de un arreglo
+            return [jsonObj]; // Devuelve el JSON dentro de un arreglo
         }
 
         function displayJSON(jsonData) {
@@ -375,6 +387,19 @@
             const inputType = "UPLOAD WEB";//document.getElementById('inputType').value;
             const address_format = {};
 
+            var filterColumn = []
+            var userValues = []
+
+            Array.from(document.querySelectorAll('#csvColumns .drag-item'))
+                .map(item => {
+                    if (item.lang != "Nuevo") {
+                        filterColumn.push(item.textContent)
+                    } else {
+                        userValues.push(item.textContent)
+                    }
+                });
+
+
             dropAreas.forEach(area => {
                 const column = area.dataset.column;
                 const items = area.querySelectorAll('.drag-item');
@@ -385,7 +410,7 @@
                     var index = 0
                     address_format[column].forEach(item => {
                         var value = ""
-                        if (JSON.parse(csvJson)[0][item] == undefined) {
+                        if (userValues.indexOf(item) > -1) {
                             value = item + " "
                             address_format[column][index] = "'" + item + "'"
                         } else {
@@ -399,14 +424,6 @@
 
             });
 
-            var filterColumn = []
-
-            Array.from(document.querySelectorAll('#csvColumns .drag-item'))
-                .map(item => {
-                    if (item.lang != "Nuevo") {
-                        filterColumn.push(item.textContent)
-                    }
-                });
 
             const payload = {
                 input_type: inputType,
