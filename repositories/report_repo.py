@@ -4,7 +4,7 @@ from sqlalchemy import create_engine, text
 def fetch_report_by_process_id(process_id):
     query = text(
         """
-        -- Tu consulta SQL sin cambios
+        
         WITH
         address_scores AS (
             SELECT 
@@ -12,36 +12,28 @@ def fetch_report_by_process_id(process_id):
                 MAX(CASE WHEN quality_label = 'CargaCSV' THEN score END) AS CargaCSV,
                 MAX(CASE WHEN quality_label = 'Google' THEN score END) AS Google_score,
                 MAX(CASE WHEN quality_label = 'Nominatim' THEN score END) AS Nominatim_score
-            FROM 
-                address_score
-            GROUP BY 
-                address_id
+            FROM address_score
+            GROUP BY address_id
         ),
         api_google AS (
             SELECT 
-                address_id,
-                MAX(CASE WHEN arv.attribute_name = 'latitud' THEN CAST(arv.attribute_value AS TEXT) || '°' END) AS Google_latitud,
-                MAX(CASE WHEN arv.attribute_name = 'longitude' THEN CAST(arv.attribute_value AS TEXT) || '°' END) AS Google_longitude,
+                arv.address_id,
+                MAX(CASE WHEN arv.attribute_name = 'latitud' THEN arv.attribute_value || '°' END) AS Google_latitud,
+                MAX(CASE WHEN arv.attribute_name = 'longitude' THEN arv.attribute_value || '°' END) AS Google_longitude,
                 MAX(CASE WHEN arv.attribute_name = 'address' THEN arv.attribute_value END) AS Google_address
-            FROM 
-                api_response_values arv
-            JOIN 
-                type_api_geocord api ON api.id = arv.type_api_id AND api.name = 'Google'
-            GROUP BY 
-                address_id
+            FROM api_response_values arv
+            WHERE arv.type_api_id = (SELECT id FROM type_api_geocord WHERE name = 'Google')
+            GROUP BY arv.address_id
         ),
         api_nominatim AS (
             SELECT 
-                address_id,
-                MAX(CASE WHEN arv.attribute_name = 'latitud' THEN CAST(arv.attribute_value AS TEXT) || '°' END) AS Nominatim_latitud,
-                MAX(CASE WHEN arv.attribute_name = 'longitude' THEN CAST(arv.attribute_value AS TEXT) || '°' END) AS Nominatim_longitude,
+                arv.address_id,
+                MAX(CASE WHEN arv.attribute_name = 'latitud' THEN arv.attribute_value || '°' END) AS Nominatim_latitud,
+                MAX(CASE WHEN arv.attribute_name = 'longitude' THEN arv.attribute_value || '°' END) AS Nominatim_longitude,
                 MAX(CASE WHEN arv.attribute_name = 'address' THEN arv.attribute_value END) AS Nominatim_address
-            FROM 
-                api_response_values arv
-            JOIN 
-                type_api_geocord api ON api.id = arv.type_api_id AND api.name = 'Nominatim'
-            GROUP BY 
-                address_id
+            FROM api_response_values arv
+            WHERE arv.type_api_id = (SELECT id FROM type_api_geocord WHERE name = 'Nominatim')
+            GROUP BY arv.address_id
         ),
         input_requests AS (
             SELECT 
@@ -53,10 +45,8 @@ def fetch_report_by_process_id(process_id):
                 MAX(CASE WHEN attribute_name = 'comuna_iso' THEN attribute_value END) AS comuna_iso,
                 MAX(CASE WHEN attribute_name = 'glosacomun' THEN attribute_value END) AS glosacomun,
                 MAX(CASE WHEN attribute_name = 'glosa_regi' THEN attribute_value END) AS glosa_regi
-            FROM 
-                input_request
-            GROUP BY 
-                address_id
+            FROM input_request
+            GROUP BY address_id
         )
         SELECT 
             a.id AS id_address,
@@ -77,40 +67,20 @@ def fetch_report_by_process_id(process_id):
             n.Nominatim_latitud,
             n.Nominatim_longitude,
             n.Nominatim_address
-        FROM 
-            address a
-        LEFT JOIN 
-            address_scores sc ON sc.address_id = a.id
-        LEFT JOIN 
-            api_google g ON g.address_id = a.id
-        LEFT JOIN 
-            api_nominatim n ON n.address_id = a.id
-        LEFT JOIN 
-            input_requests ir ON ir.address_id = a.id
-        WHERE 
-            sc.CargaCSV IS NOT NULL
-            and a.id in (select address_id from address_origin_source where origin_source_id=:process_id)
-        group by
-            a.id ,
-            a.full_address,
-            ir.run,
-            ir.calle,
-            ir.numero,
-            ir.resto,
-            ir.comuna_iso,
-            ir.glosacomun,
-            ir.glosa_regi,
-            sc.CargaCSV,
-            sc.Google_score,
-            sc.Nominatim_score,
-            g.Google_latitud,
-            g.Google_longitude,
-            g.Google_address,
-            n.Nominatim_latitud,
-            n.Nominatim_longitude,
-            n.Nominatim_address
-        ORDER BY 
-            CAST(ir.run AS INTEGER)
+        FROM address a
+        LEFT JOIN address_scores sc ON sc.address_id = a.id
+        LEFT JOIN api_google g ON g.address_id = a.id
+        LEFT JOIN api_nominatim n ON n.address_id = a.id
+        LEFT JOIN input_requests ir ON ir.address_id = a.id
+        WHERE sc.CargaCSV IS NOT NULL
+        AND EXISTS (
+            SELECT 1
+            FROM address_origin_source aos
+            WHERE aos.origin_source_id = :process_id
+                AND aos.address_id = a.id
+        )
+        ORDER BY CAST(ir.run AS INTEGER);
+
         """
     )
 

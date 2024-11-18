@@ -113,7 +113,7 @@ async def get_info(process_id: str):
 async def create_info(request: Request, address: str):
     try:
         remote_ip = request.client.host
-        result = await data_service.generate_info_address(address, remote_ip)
+        result = await data_service.generate_info_address(address, remote_ip, True)
         return {k: v for k, v in result.items() if v is not None}
     except ValueError as e:
         raise HTTPException(
@@ -181,7 +181,7 @@ def generate_process_id(ip):
     return f"process_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}_{ip}"
 
 # Función para procesar el CSV en segundo plano
-def process_csv_from_web(config, csv_content, ip, origin_source_id):
+async def process_csv_from_web(config, csv_content, ip, origin_source_id):
     try:
         # Cargar los datos del CSV en un DataFrame
         from io import StringIO
@@ -223,8 +223,8 @@ def process_csv_from_web(config, csv_content, ip, origin_source_id):
                 insert_or_update_address_score(address_id, "CargaCSV", score)
                 attributes = {attr: row[attr] for attr in input_attributes if attr in row}
                 insert_into_input_request(address_id, input_type_id, attributes)
-
-            data_service.generate_info_address(address_data["full_address"], "127.0.0.1")
+        
+            await data_service.generate_info_address(address_data["full_address"], ip,False)
             print("[" + address_data["full_address"] + "]  process api coords \n")
     except Exception as e:
         print("Error al procesar CSV:", e)

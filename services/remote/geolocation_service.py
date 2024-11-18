@@ -13,4 +13,4 @@ class GeolocationService:
         self.geo_api = GeoAPIFactory.create_geo_api(api_name)
 
     async def get_geolocation(self, address: str) -> dict:
-        return self.geo_api.get_geolocation(address)
+        return self.geo_api.get_geolocation(address, False)

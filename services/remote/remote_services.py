@@ -7,7 +7,7 @@ class GeolocationService:
         self.geo_api = GeoAPIFactory.create_geo_api(api_name)
 
     def get_geolocation(self, address: str) -> dict:
-        return self.geo_api.get_geolocation(address)
+        return self.geo_api.get_geolocation(address, False)
 
     def get_all_info(self, address: str) -> dict:
         result = fetch_address_details(address)

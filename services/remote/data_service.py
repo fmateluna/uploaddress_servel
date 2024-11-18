@@ -11,41 +11,44 @@ class DataService:
 
     def __init__(self):
         self.session = get_session()
+        self.new_address = False
 
-    async def process_address(self, api_name: str, address: str):
+    async def process_address(self, api_name: str, address: str,new_address: bool = False):
+        self.new_address = new_address
         geo_service = GeolocationService(api_name)
         geolocation_data = await geo_service.get_geolocation(
             address
-        )  # Asegúrate de que esta función sea async
+        )  
         return geolocation_data
 
     async def _save_address(self, address: str, remote_ip: str):
-        # Verificar si la dirección ya existe
-        existing_address = (
-            self.session.query(Address)
-            .filter_by(full_address=address, input_type_id=8)
-            .first()
-        )
-
-        # Si no existe, proceder a agregarla
-        if not existing_address:
-            address_from_endpoint = Address(
-                full_address=address, input_type_id=8, ip_address=remote_ip
+        if self.new_address:
+            # Verificar si la dirección ya existe
+            existing_address = (
+                self.session.query(Address)
+                .filter_by(full_address=address, input_type_id=8)
+                .first()
             )
-            self.session.add(address_from_endpoint)
-            self.session.commit()  # Confirmar los cambios en la base de datos
-            print(f"Address '{address}' registrada exitosamente.")
-        else:
-            print(f"Address '{address}' ya existe en la base de datos.")
 
-    async def generate_info_address(self, address: str, remote_ip: str):
+            # Si no existe, proceder a agregarla
+            if not existing_address:
+                address_from_endpoint = Address(
+                    full_address=address, input_type_id=8, ip_address=remote_ip
+                )
+                self.session.add(address_from_endpoint)
+                self.session.commit()  # Confirmar los cambios en la base de datos
+                print(f"Address '{address}' registrada exitosamente.")
+            else:
+                print(f"Address '{address}' ya existe en la base de datos.")
 
-        await self._save_address(address, remote_ip)
+    async def generate_info_address(self, address: str, remote_ip: str, new_address: bool = False):
+        if new_address:
+            await self._save_address(address, remote_ip)
 
         # Ejecutar ambas llamadas a process_address en paralelo, ignorando errores individuales
         results = await asyncio.gather(
-            self.process_address("google", address=address),
-            self.process_address("nominatim", address=address),
+            self.process_address("google", address=address, new_address=new_address),
+            self.process_address("nominatim", address=address,new_address=new_address),
             return_exceptions=True,
         )
 
