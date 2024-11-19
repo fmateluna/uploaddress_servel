@@ -12,15 +12,15 @@ get_input_type_query = load_query("get_input_type.sql")
 
 
 def get_or_create_input_type(input_type_name):
-    connInsert = psycopg2.connect(**DB_CONFIG)
-    cursorInsertInputType = connInsert.cursor()
-    cursorInsertInputType.execute(get_input_type_query, (input_type_name,))
-    result = cursorInsertInputType.fetchone()
+    conn_insert = psycopg2.connect(**DB_CONFIG)
+    cursor_insert_input_type = conn_insert.cursor()
+    cursor_insert_input_type.execute(get_input_type_query, (input_type_name,))
+    result = cursor_insert_input_type.fetchone()
     if result:
-        connInsert.close()
+        conn_insert.close()
         return result[0]
     else:
-        cursorInsertInputType.execute(create_input_type_query, (input_type_name,))
-        connInsert.commit()
+        cursor_insert_input_type.execute(create_input_type_query, (input_type_name,))
+        conn_insert.commit()
         print("Se ha creado un nuevo typo de input " + input_type_name + "\n")
-        return cursorInsertInputType.fetchone()[0]
+        return cursor_insert_input_type.fetchone()[0]

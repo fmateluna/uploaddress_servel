@@ -193,16 +193,23 @@
 
                 <!-- Sección para mapear a la tabla Address -->
                 <div class="col-md-8">
-                    <h5>Address address_format</h5>
+                    <h4>Formateador de direcciones</h4>
                     <div id="message-container"
                         style="position: fixed; top: 20px; right: 20px; z-index: 1000; display: none; background-color: #f44336; color: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); font-size: 14px;">
                     </div>
                     <div id="addressMapping" class="scrollable-address_format">
                         <!-- Mapeo de direcciones, como en el código original -->
                         <div class="mb-3">
+                            <h5>Input de geolocalizacion</h5>
+                        </div>
+                        <div class="mb-3">
                             <strong>full_address</strong><small id="result_full_address"></small>
                             <div class="drop-area" data-column="full_address"></div>
                         </div>
+                        <div class="mb-3">
+                            <h5>Datos de referencias</h5>
+                        </div>
+
                         <div class="mb-3">
                             <strong>house_number</strong><small id="result_house_number"></small>
                             <div class="drop-area" data-column="house_number"></div>
@@ -352,9 +359,9 @@
         };
 
         function csvToJSON(csv) {
-            const lines = csv.trim().split('\n');
-            const headers = lines[0].split(','); // Primer fila: encabezados de columnas
-            const values = lines[1].split(','); // Segunda fila: los valores
+            const lines = csv.trim().split('\n')
+            const headers = lines[0].split(',');
+            const values = lines[1].split(',');
 
             const jsonObj = {};
             headers.forEach((header, index) => {
@@ -364,10 +371,11 @@
             return [jsonObj]; // Retorna el objeto JSON dentro de un arreglo
         }
 
-        function displayJSON(jsonData) {
-            csvJson = JSON.stringify(jsonData, null, 2)
-
-            console.log(csvJson);
+        function readFormatJSON(jsonData) {
+            csvJson = JSON.stringify(jsonData, null, 2);
+            console.log("Antes de reemplazar:", csvJson);
+            csvJson = csvJson.replace(/\\r/g, ""); // Reemplazar \\r
+            console.log("Después de reemplazar:", csvJson);
         }
 
 
@@ -392,19 +400,19 @@
                 const column = area.dataset.column;
                 const items = area.querySelectorAll('.drag-item');
                 address_format[column] = Array.from(items).map(item => item.textContent);
-                var small_result = document.getElementById("result_" + column);
-                if (small_result != null && csvJson != null) {
-                    small_result.textContent = " "
+                var valueOfJson = document.getElementById("result_" + column);
+                if (valueOfJson != null && csvJson != null) {
+                    valueOfJson.textContent = " "
                     var index = 0
                     address_format[column].forEach(item => {
-                        var value = ""
+                        var value = "";
                         if (userValues.indexOf(item) > -1) {
                             value = item + " "
                             address_format[column][index] = "'" + item + "'"
                         } else {
                             value = JSON.parse(csvJson)[0][item] + " ";
                         }
-                        small_result.textContent += value
+                        valueOfJson.textContent += value
                         index++
                     })
 
@@ -449,7 +457,7 @@
                     reader.onload = function (e) {
                         const csvContent = e.target.result;
                         const jsonResult = csvToJSON(csvContent);
-                        displayJSON(jsonResult);
+                        readFormatJSON(jsonResult);
                     };
                     reader.readAsText(file);
 

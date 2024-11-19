@@ -105,9 +105,6 @@ async def get_info(process_id: str):
             ).dict(),
         )
 
-        
-
-
 # Endpoint para crear información de la dirección
 @router.get("/create/", response_model=dict)
 async def create_info(request: Request, address: str):
