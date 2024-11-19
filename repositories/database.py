@@ -13,7 +13,8 @@ DB_CONFIG = {
 
 # Crear el motor de SQLAlchemy
 DATABASE_URL = f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['dbname']}"
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL,
+        poolclass=NullPool)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

@@ -4,6 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 import time
 
+from repositories.address_score_repo import insert_or_update_address_score
 from repositories.database import get_session
 from repositories.models import Address, AddressScore, ApiLogs, ApiResponseValues
 
@@ -102,13 +103,8 @@ class NominatimAPI:
                 self.session.add(address_record)
                 self.session.commit()
 
-            # Registrar en AddressScore
-            address_score = AddressScore(
-                address_id=address_record.id,
-                quality_label="Nominatim",
-                score=quality_score,
-            )
-            self.session.add(address_score)
+            # Registrar en AddressScore            
+            insert_or_update_address_score(address_record.id, "Nominatim", quality_score)
 
             # Registrar en ApiLogs
             api_log = ApiLogs(
