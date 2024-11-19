@@ -1,4 +1,3 @@
-from typing import LiteralString
 import psycopg2
 from psycopg2 import sql, DatabaseError
 from repositories.database import DB_CONFIG, load_query
