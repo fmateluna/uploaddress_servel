@@ -14,6 +14,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 class GoogleMapsAPI:
     def __init__(self):
         self.session = get_session()
+        self.update = False
 
     def _save_api_response_attribute(
         self,
@@ -32,13 +33,14 @@ class GoogleMapsAPI:
         self.session.add(api_response)
 
     def get_geolocation(self, address: str, update: bool = False) -> dict:
+        self.update = update
         # Verifica si ya existe una entrada para la dirección en la base de datos
         address_record = (
             self.session.query(Address).filter_by(full_address=address).first()
         )
 
         # Si existe y no se solicita una actualización, se devuelve el último response almacenado
-        if address_record and not update:
+        if address_record:
             print(
                 "Usando la respuesta en caché de la base de datos para evitar el uso de tokens."
             )
@@ -106,7 +108,7 @@ class GoogleMapsAPI:
                     .filter_by(full_address=original_address)
                     .first()
                 )
-                if not address_record:
+                if not address_record and self.update:
                     address_record = Address(full_address=full_address)
                     self.session.add(address_record)
                     self.session.flush()

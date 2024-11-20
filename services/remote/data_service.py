@@ -13,12 +13,13 @@ class DataService:
         self.session = get_session()
         self.new_address = False
 
-    async def process_address(self, api_name: str, address: str,new_address: bool = False):
+    async def process_address(
+        self, api_name: str, address: str, new_address: bool = False
+    ):
         self.new_address = new_address
         geo_service = GeolocationService(api_name)
-        geolocation_data = await geo_service.get_geolocation(
-            address
-        )  
+
+        geolocation_data = await geo_service.get_geolocation(address)
         return geolocation_data
 
     async def _save_address(self, address: str, remote_ip: str):
@@ -41,14 +42,16 @@ class DataService:
             else:
                 print(f"Address '{address}' ya existe en la base de datos.")
 
-    async def generate_info_address(self, address: str, remote_ip: str, new_address: bool = False):
+    async def generate_info_address(
+        self, address: str, remote_ip: str, new_address: bool = False
+    ):
         if new_address:
             await self._save_address(address, remote_ip)
 
         # Ejecutar ambas llamadas a process_address en paralelo, ignorando errores individuales
         results = await asyncio.gather(
             self.process_address("google", address=address, new_address=new_address),
-            self.process_address("nominatim", address=address,new_address=new_address),
+            self.process_address("nominatim", address=address, new_address=new_address),
             return_exceptions=True,
         )
 
@@ -74,7 +77,7 @@ class DataService:
             return {
                 "message": "No se encontraron datos para la dirección especificada."
             }
-            
+
     def report(self, process_id: str):
         result = fetch_report_by_process_id(process_id)
         if result:
@@ -83,4 +86,4 @@ class DataService:
         else:
             return {
                 "message": "No se encontraron datos para la dirección especificada."
-            }            
+            }

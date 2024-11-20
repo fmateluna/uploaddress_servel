@@ -46,19 +46,20 @@ class NominatimAPI:
 
     def get_geolocation(self, address: str, update: bool = False):
         # Verifica si ya existe una entrada para la dirección en la base de datos
-        address_record = (
-            self.session.query(Address).filter_by(full_address=address).first()
-        )
-
-        # Si existe y no se solicita una actualización, se devuelve el último response almacenado
-        if address_record and not update:
-            api_response_from_logs = (
-                self.session.query(ApiLogs)
-                .filter_by(address_id=address_record.id, type_api_id=2)
-                .first()
+        if update:
+            address_record = (
+                self.session.query(Address).filter_by(full_address=address).first()
             )
-            if api_response_from_logs:
-                return api_response_from_logs.response_payload
+
+            # Si existe y no se solicita una actualización, se devuelve el último response almacenado
+            if address_record and update:
+                api_response_from_logs = (
+                    self.session.query(ApiLogs)
+                    .filter_by(address_id=address_record.id, type_api_id=2)
+                    .first()
+                )
+                if api_response_from_logs:
+                    return api_response_from_logs.response_payload
         try:
             response_data = self.call_api(
                 address
@@ -95,13 +96,14 @@ class NominatimAPI:
             quality_score = response_data.get("addresstype")
 
             # Buscar o crear el registro de dirección
-            address_record = (
-                self.session.query(Address).filter_by(full_address=address).first()
-            )
-            if not address_record:
-                address_record = Address(full_address=address)
-                self.session.add(address_record)
-                self.session.commit()
+            if update:
+                address_record = (
+                    self.session.query(Address).filter_by(full_address=address).first()
+                )
+                if not address_record:
+                    address_record = Address(full_address=address)
+                    self.session.add(address_record)
+                    self.session.commit()
 
             # Registrar en AddressScore            
             insert_or_update_address_score(address_record.id, "Nominatim", quality_score)

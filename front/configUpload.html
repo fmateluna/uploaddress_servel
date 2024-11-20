@@ -175,11 +175,11 @@
                 <div class="col-md-4">
                     <h5>Columnas que existen en el CSV</h5>
                     <div class="mb-3">
-                        <strong for="newColumn" class="form-strong">Agregar nueva columna</strong>
+                        <strong for="newColumn" class="form-strong">Agregar un valor</strong>
                         <div class="input-group">
                             <input type="text" id="newColumn" class="form-control"
                                 placeholder="Ingrese nombre de la columna">
-                            <button class="btn btn-primary" id="addColumnButton">Agregar columna</button>
+                            <button class="btn btn-primary" id="addColumnButton">Agregar</button>
                         </div>
                     </div>
                     <div class="drag-area" id="csvColumns">
@@ -205,51 +205,59 @@
                             <h5>Input de geolocalizacion</h5>
                         </div>
                         <div class="mb-3">
-                            <strong>full_address</strong><small id="result_full_address"></small>
+                            <strong>Direccion completa</strong><small id="result_full_address"></small>
                             <div class="drop-area" data-column="full_address"></div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>* Comuna</strong><small id="result_commune"></small>
+                            <div class="drop-area" data-column="commune"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <strong>* Región</strong><small id="result_region"></small>
+                            <div class="drop-area" data-column="region"></div>
+                        </div>
+                        <div class="mb-3">
+                            <small style="background-color:gold"> *: Campos necesarios para consultar en
+                                <strong>localidades</strong>.</small>
                         </div>
                         <div class="mb-3">
                             <h5>Datos de referencias</h5>
                         </div>
 
                         <div class="mb-3">
-                            <strong>house_number</strong><small id="result_house_number"></small>
+                            <strong>Numero (casa/departamento)</strong><small id="result_house_number"></small>
                             <div class="drop-area" data-column="house_number"></div>
                         </div>
                         <div class="mb-3">
-                            <strong>complements</strong><small id="result_complements"></small>
+                            <strong>Referencias o complementos adicionales</strong><small
+                                id="result_complements"></small>
                             <div class="drop-area" data-column="complements"></div>
                         </div>
                         <div class="mb-3">
-                            <strong>neighbourhood</strong><small id="result_neighbourhood"></small>
+                            <strong>Vecindario</strong><small id="result_neighbourhood"></small>
                             <div class="drop-area" data-column="neighbourhood"></div>
                         </div>
                         <div class="mb-3">
-                            <strong>sector</strong><small id="result_sector"></small>
+                            <strong>Sector/Parcela</strong><small id="result_sector"></small>
                             <div class="drop-area" data-column="sector"></div>
                         </div>
+
                         <div class="mb-3">
-                            <strong>commune</strong><small id="result_commune"></small>
-                            <div class="drop-area" data-column="commune"></div>
-                        </div>
-                        <div class="mb-3">
-                            <strong>city</strong><small id="result_city"></small>
+                            <strong>Ciudad</strong><small id="result_city"></small>
                             <div class="drop-area" data-column="city"></div>
                         </div>
                         <div class="mb-3">
-                            <strong>province</strong><small id="result_province"></small>
+                            <strong>Provincia</strong><small id="result_province"></small>
                             <div class="drop-area" data-column="province"></div>
                         </div>
+
                         <div class="mb-3">
-                            <strong>region</strong><small id="result_region"></small>
-                            <div class="drop-area" data-column="region"></div>
-                        </div>
-                        <div class="mb-3">
-                            <strong>postal_code</strong><small id="result_postal_codes"></small>
+                            <strong>Codigo Postal</strong><small id="result_postal_codes"></small>
                             <div class="drop-area" data-column="postal_code"></div>
                         </div>
                         <div class="mb-3">
-                            <strong>country</strong><small id="result_country"></small>
+                            <strong>Pais</strong><small id="result_country"></small>
                             <div class="drop-area" data-column="country"></div>
                         </div>
                         <div class="mb-3">

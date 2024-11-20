@@ -1,6 +1,14 @@
 import asyncio
 import datetime
-from fastapi import FastAPI, APIRouter, File, HTTPException, Request, UploadFile,BackgroundTasks
+from fastapi import (
+    FastAPI,
+    APIRouter,
+    File,
+    HTTPException,
+    Request,
+    UploadFile,
+    BackgroundTasks,
+)
 from pydantic import BaseModel
 from typing import Any, Dict
 import sys
@@ -21,7 +29,10 @@ from repositories.address_repo import save_address
 from repositories.address_score_repo import insert_or_update_address_score
 from repositories.input_request_repo import insert_into_input_request
 from repositories.input_type_repo import get_or_create_input_type
-from repositories.origin_source_repo import insert_origin_source, link_address_to_origin_source
+from repositories.origin_source_repo import (
+    insert_origin_source,
+    link_address_to_origin_source,
+)
 from services.local.local_service import build_address_components
 from services.remote.data_service import DataService
 
@@ -77,11 +88,15 @@ async def get_info(address: str):
                 detail="Error al obtener la información: " + str(e), code=500
             ).dict(),
         )
-        
+
+
 # Endpoint para obtener información de la dirección
 from typing import List
 
-@router.get("/report/{process_id}", response_model=List[dict])  # Usar List[dict] para aceptar múltiples registros
+
+@router.get(
+    "/report/{process_id}", response_model=List[dict]
+)  # Usar List[dict] para aceptar múltiples registros
 async def get_info(process_id: str):
     try:
         result = data_service.report(process_id)
@@ -90,12 +105,11 @@ async def get_info(process_id: str):
         else:
             raise HTTPException(
                 status_code=404,
-                detail="No se encontraron resultados para este process_id"
+                detail="No se encontraron resultados para este process_id",
             )
     except ValueError as e:
         raise HTTPException(
-            status_code=400,
-            detail=ErrorResponse(detail=str(e), code=400).dict()
+            status_code=400, detail=ErrorResponse(detail=str(e), code=400).dict()
         )
     except Exception as e:
         raise HTTPException(
@@ -104,6 +118,7 @@ async def get_info(process_id: str):
                 detail="Error al obtener la información: " + str(e), code=500
             ).dict(),
         )
+
 
 # Endpoint para crear información de la dirección
 @router.get("/create/", response_model=dict)
@@ -138,7 +153,7 @@ async def upload_config():
 @router.get("/geo/upload/report/{process_id}", response_class=HTMLResponse)
 async def upload_config(process_id: str):
     html_file_path = FRONTEND_PATH / "report.html"
-    
+
     # Leer el archivo HTML
     with open(html_file_path, "r", encoding="utf-8") as f:
         html_content = f.read()
@@ -148,9 +163,15 @@ async def upload_config(process_id: str):
 
     return HTMLResponse(content=html_content, status_code=200)
 
+
 # Endpoint para subir los archivos CSV y JSON
 @router.post("/process_csv/")
-async def process_csv_endpoint(request: Request, background_tasks: BackgroundTasks, csv_file: UploadFile = File(...), json_file: UploadFile = File(...)):
+async def process_csv_endpoint(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    csv_file: UploadFile = File(...),
+    json_file: UploadFile = File(...),
+):
     ip = request.client.host  # Obtener la IP remota
     try:
         # Leer el archivo JSON
@@ -161,29 +182,35 @@ async def process_csv_endpoint(request: Request, background_tasks: BackgroundTas
         csv_content = await csv_file.read()
 
         fecha_hora_actual = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        id_process = insert_origin_source("Via Web : " + fecha_hora_actual + " desde " + ip)
+        id_process = insert_origin_source(
+            "Via Web : " + fecha_hora_actual + " desde " + ip
+        )
 
         # Llamar a la función process_csv en segundo plano
-        background_tasks.add_task(process_csv_from_web, config, csv_content.decode('utf-8'), ip, id_process)
+        background_tasks.add_task(
+            process_csv_from_web, config, csv_content.decode("utf-8"), ip, id_process
+        )
 
-        return {"message": f"Procesado con el ID: {str(id_process)}" , "id":id_process}
+        return {"message": f"Procesado con el ID: {str(id_process)}", "id": id_process}
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Error al procesar los archivos: {str(e)}"
+            status_code=500, detail=f"Error al procesar los archivos: {str(e)}"
         )
+
 
 # Función para generar un ID de proceso (puedes ajustarlo según lo que necesites)
 def generate_process_id(ip):
     return f"process_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}_{ip}"
+
 
 # Función para procesar el CSV en segundo plano
 async def process_csv_from_web(config, csv_content, ip, origin_source_id):
     try:
         # Cargar los datos del CSV en un DataFrame
         from io import StringIO
+
         data = pd.read_csv(StringIO(csv_content))
-        
+
         input_type = config["input_type"]
         input_attributes = config["input_atributes"]
         address_format = config["address_format"]
@@ -204,13 +231,15 @@ async def process_csv_from_web(config, csv_content, ip, origin_source_id):
 
             # Generar columnas y valores dinámicamente en función de los datos disponibles en address_data
             columns = ", ".join(address_data.keys())
-            values_placeholders = ", ".join([f"%({key})s" for key in address_data.keys()])
+            values_placeholders = ", ".join(
+                [f"%({key})s" for key in address_data.keys()]
+            )
 
             # Añadir input_type_id manualmente a address_data
             address_data["input_type_id"] = input_type_id
             columns += ", input_type_id"
             values_placeholders += ", %(input_type_id)s"
-            
+
             # Guardar en la tabla address
             address_id = save_address(columns, values_placeholders, address_data)
 
@@ -218,14 +247,19 @@ async def process_csv_from_web(config, csv_content, ip, origin_source_id):
                 link_address_to_origin_source(address_id, origin_source_id)
                 print("[" + address_data["full_address"] + "]  is OK \n")
                 insert_or_update_address_score(address_id, "CargaCSV", score)
-                attributes = {attr: row[attr] for attr in input_attributes if attr in row}
+                attributes = {
+                    attr: row[attr] for attr in input_attributes if attr in row
+                }
                 insert_into_input_request(address_id, input_type_id, attributes)
-        
-            await data_service.generate_info_address(address_data["full_address"], ip,False)
+
+            await data_service.generate_info_address(
+                address_data["full_address"], ip, False
+            )
             print("[" + address_data["full_address"] + "]  process api coords \n")
     except Exception as e:
         print("Error al procesar CSV:", e)
-        
+
+
 # Configurar la aplicación principal
 app = FastAPI()
 app.include_router(router)

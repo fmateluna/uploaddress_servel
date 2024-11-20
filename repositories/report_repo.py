@@ -68,14 +68,12 @@ def fetch_report_by_process_id(process_id):
         WHERE 
             aos.origin_source_id = :process_id;
 
-   
-
         """
     )
 
     # Iniciar la sesión y ejecutar la consulta
     with get_session() as session:
-        result = session.execute(query, {"process_id": process_id}).fetchall()  # fetchall() para obtener todos los resultados
+        result = session.execute(query, {"process_id": int(process_id)}).fetchall()  # fetchall() para obtener todos los resultados
 
     # Si obtenemos resultados, los convertimos en diccionarios
     if result:
