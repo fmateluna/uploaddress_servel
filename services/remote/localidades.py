@@ -9,6 +9,7 @@ from datetime import datetime
 import time
 
 from repositories.address_score_repo import insert_or_update_address_score
+from repositories.database import get_session
 from repositories.models import Address, AddressScore, ApiLogs, ApiResponseValues
 
 
@@ -56,21 +57,44 @@ class LocalidadesAPI:
                             :direccion
                         ),
                         0
-                    ) AS score
+                    ) * 100 AS score -- Convertimos el score a porcentaje
                 FROM localidades
             )
             SELECT
                 ss.direccion,
-                ss.score AS total_score,
-                l.nombre,
-                l.comuna,
-                l.region,
-                l.*
+                TO_CHAR(ss.score::NUMERIC(5, 2), 'FM999990.00') AS score, 
+				l.nombre,
+				l.comuna,
+				l.region,
+				l.id,
+				l.geom,                          
+				l.objectid,
+				l.id_localid,
+				l.cod_comuna,
+				l.comuna,
+				l.region,
+				l.glosa_re,      
+				l.nombre,
+				l.longitud,
+				l.latitud,
+				l.tipo,
+				l.estado,
+				l.circuns,
+				l.codigo_cir,
+				l.glosacircu,
+				l.principal,
+				l.revisado,
+				l.created_user,
+				l.last_edited_user,
+				l.globalid 
             FROM localidades l
             JOIN similarity_scores ss
                 ON l.id = ss.id
             ORDER BY ss.score DESC
-            LIMIT 1
+            LIMIT 1;
+
+
+
             """
         )
         try:
@@ -96,7 +120,7 @@ class LocalidadesAPI:
             return None
 
     def __init__(self):
-        self.session = get_localidad_session()  # Usamos la nueva función de sesión
+        self.session = get_session()  # Usamos la nueva función de sesión
 
     # address_record.id, "latitud", latitude, response_time, api_log.id
     def _save_api_response_attribute(
@@ -104,7 +128,7 @@ class LocalidadesAPI:
     ):
         try:
             api_response = ApiResponseValues(
-                type_api_id=2,
+                type_api_id=3,
                 api_logs_id=api_logs_id,
                 address_id=address_id,
                 attribute_name=attribute_name,
@@ -121,11 +145,58 @@ class LocalidadesAPI:
             # Llamamos a `fetch_location_details` para obtener los detalles de la localización
             response_data = self.fetch_location_details(direccion=address)
 
+            address_record = (
+                self.session.query(Address).filter_by(full_address=address).first()
+            )
+
+            # Buscar o crear el registro de dirección
+            if update:
+                if not address_record:
+                    address_record = Address(full_address=address)
+                    self.session.add(address_record)
+                    self.session.commit()
+
             if not response_data:
                 raise ValueError(
                     f"No se encontró información para la dirección: {address}"
                 )
 
+            # Registrar en ApiLogs
+            response_time = datetime.now()
+            api_log = ApiLogs(
+                address_id=address_record.id,
+                request_payload=address,
+                response_payload=response_data,
+                created_at=datetime.now(),
+                status_code=200,
+                response_time_ms=(datetime.now() - response_time).microseconds // 1000,
+            )
+            self.session.add(api_log)
+
+            # Procesar los datos de la respuesta
+            display_name = response_data.get("direccion")  # Tomamos el primer resultado
+            latitude = float(response_data.get("latitud"))
+            longitude = float(response_data.get("longitud"))
+
+            self._save_api_response_attribute(
+                address_record.id, "latitud", latitude, api_log.id
+            )
+            self._save_api_response_attribute(
+                address_record.id, "longitude", longitude, api_log.id
+            )
+            self._save_api_response_attribute(
+                address_record.id, "address", display_name, api_log.id
+            )
+
+            # El porcentaje de calidad tiene que ver con la
+            # direccion vs comuna + region + nombre y su porcentaje de similitud
+            quality_score = response_data.get("score")
+
+            # Registrar en AddressScore
+            insert_or_update_address_score(
+                address_record.id, "Localidades", quality_score
+            )
+            self.session.commit()
             return response_data
 
         except SQLAlchemyError as e:

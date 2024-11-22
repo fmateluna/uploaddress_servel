@@ -28,8 +28,9 @@
         /* Estilo del mensaje dentro del overlay */
         .message {
             padding: 20px;
-            background-color: #fff;
-            border-radius: 5px;
+            background: linear-gradient(145deg, #ffffff, #d9e8f6);
+            /* Efecto de fondo luminoso */
+            border-radius: 10px;
             font-size: 18px;
             font-weight: bold;
             text-align: center;
@@ -124,14 +125,13 @@
         }
 
         .drag-item {
-            background-color: #e9ecef;
-            border: 1px solid #ccc;
-            padding: 5px 10px;
+            background: linear-gradient(145deg, #e2e8f0, #cbd5e0);
+            border: 1px solid #6c757d;
+            padding: 8px 15px;
             margin: 5px;
-            border-radius: 3px;
+            border-radius: 5px;
             cursor: grab;
             display: inline-block;
-            /* Asegura que el elemento no se apile */
         }
 
         .drop-area {
@@ -383,7 +383,7 @@
 
         function readFormatJSON(jsonData) {
             csvJson = JSON.stringify(jsonData, null, 2);
-            csvJson = csvJson.replace(/\\r/g, ""); // Reemplazar \\r
+            csvJson = csvJson.replace(/\\r/g, "");
         }
 
 
@@ -445,7 +445,7 @@
 
             console.log('Configuration JSON:', payload);
 
-            // Aquí puedes enviar los datos al backend
+            // TODO: PENDIENTE
             fetch('/save-config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -458,25 +458,22 @@
         document.getElementById('csvFile').addEventListener('change', function (event) {
             const file = event.target.files[0];
             if (file) {
-                // Usamos PapaParse para leer el CSV
                 Papa.parse(file, {
                     complete: function (results) {
-                        // El resultado es un objeto con las filas del CSV
+
                         const rows = results.data;
                         const headerRow = rows[0]; // Primera fila (encabezados)
 
                         const csvColumnsContainer = document.getElementById('csvColumns');
-                        csvColumnsContainer.innerHTML = ''; // Limpiar columnas anteriores
+                        csvColumnsContainer.innerHTML = '';
 
-                        // Iteramos sobre las columnas (encabezados) y las agregamos al contenedor
+
                         Object.keys(headerRow).forEach(column => {
                             if (column.trim()) {
                                 const columnElement = document.createElement('div');
                                 columnElement.className = 'drag-item';
                                 columnElement.draggable = true;
                                 columnElement.textContent = column.trim();
-
-                                // Añadir eventos de arrastrar
                                 columnElement.addEventListener('dragstart', () => {
                                     columnElement.classList.add('dragging');
                                 });
@@ -489,14 +486,13 @@
                             }
                         });
 
-                        // Si necesitas procesar los datos en JSON:
-                        readFormatJSON(results.data); // Puedes modificar esta función si lo deseas
+                        readFormatJSON(results.data);
                     },
                     header: true, // Indica que la primera fila contiene los encabezados
                     skipEmptyLines: true // Omite líneas vacías
                 });
 
-                // Mostrar paso 2
+                // Habilitar formulario porque ya se cargo el csv
                 document.getElementById('step2').classList.remove('disabled');
             }
         });
@@ -526,12 +522,13 @@
 
                 // Establecer el fondo verde , para VALORES EN DURO!
                 newColumn.lang = "Nuevo"
-                newColumn.style.backgroundColor = '#4caf50'; // Color verde
-                newColumn.style.color = 'white'; // Texto blanco para contraste
-                newColumn.style.padding = '5px'; // Opcional, para mejorar el estilo
-                newColumn.style.borderRadius = '4px'; // Opcional, bordes redondeados
+                newColumn.style.background = "linear-gradient(to right, #aca, #cfc)";
+                newColumn.style.color = '000';
+                newColumn.style.fontSize = 'bold';
+                newColumn.style.padding = '5px';
+                newColumn.style.borderRadius = '4px';
 
-                // Add drag event listeners
+
                 newColumn.addEventListener('dragstart', () => {
                     newColumn.classList.add('dragging');
                 });
@@ -545,12 +542,9 @@
             }
         });
 
-        // Drag and drop functionality
         const dragItems = document.querySelectorAll('.drag-item');
-        // Seleccionar todas las áreas de destino
         const dropAreas = document.querySelectorAll('.drop-area');
 
-        // Añadir eventos de arrastrar y soltar a cada área
         dropAreas.forEach(area => {
             area.addEventListener('dragover', event => {
                 event.preventDefault(); // Permitir el drop
@@ -568,13 +562,12 @@
                 const draggedItem = document.querySelector('.drag-item.dragging');
                 if (draggedItem) {
                     const currentDropArea = draggedItem.closest('.drop-area');
-                    /*
+                    /* TODO :  Ver si los usuarios son muy mancos y empiezan a arrastrar lo que sea
                     if (currentDropArea && currentDropArea !== area) {
                         showMessage("No puedes mover elementos entre áreas de destino."); // Mostrar mensaje sutil            
-                        return; // Cancelar la operación
+                        return;
                     }
                     */
-                    // Añadir el ítem arrastrado a la zona de destino
                     area.appendChild(draggedItem.cloneNode(true));
                     enableDoubleClickDelete();
                     refreshInputValues(); // Actualizar el JSON dinámico
@@ -582,7 +575,6 @@
             });
         });
 
-        // Añadir eventos de inicio y fin de arrastre a los elementos
         const draggableItems = document.querySelectorAll('.drag-item');
         draggableItems.forEach(item => {
             item.addEventListener('dragstart', () => {
@@ -602,8 +594,8 @@
             const dropItems = document.querySelectorAll('.drop-area .drag-item');
             dropItems.forEach(item => {
                 item.addEventListener('dblclick', () => {
-                    item.remove(); // Elimina el elemento
-                    refreshInputValues(); // Actualiza el JSON dinámico
+                    item.remove();
+                    refreshInputValues();
                 });
             });
         }
@@ -614,17 +606,16 @@
             messageContainer.style.display = 'block';
             messageContainer.style.opacity = '1';
 
-            // Desvanecer después de un tiempo
             setTimeout(() => {
                 messageContainer.style.transition = 'opacity 1s';
                 messageContainer.style.opacity = '0';
             }, duration - 1000);
 
-            // Ocultar completamente después de la animación
+
             setTimeout(() => {
                 messageContainer.style.display = 'none';
-                messageContainer.style.opacity = '1'; // Restaurar opacidad para la próxima vez
-                messageContainer.style.transition = 'none'; // Eliminar la transición
+                messageContainer.style.opacity = '1';
+                messageContainer.style.transition = 'none';
             }, duration);
         }
 

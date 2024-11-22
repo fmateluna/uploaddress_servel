@@ -46,26 +46,24 @@ class NominatimAPI:
 
     def get_geolocation(self, address: str, update: bool = False):
         # Verifica si ya existe una entrada para la dirección en la base de datos
-        if update:
-            address_record = (
-                self.session.query(Address).filter_by(full_address=address).first()
-            )
 
-            # Si existe y no se solicita una actualización, se devuelve el último response almacenado
-            if address_record and update:
-                api_response_from_logs = (
-                    self.session.query(ApiLogs)
-                    .filter_by(address_id=address_record.id, type_api_id=2)
-                    .first()
-                )
-                if api_response_from_logs:
-                    return api_response_from_logs.response_payload
+        address_record = (
+            self.session.query(Address).filter_by(full_address=address).first()
+        )
+
+        # Si existe y no se solicita una actualización, se devuelve el último response almacenado
+        if address_record:
+            api_response_from_logs = (
+                self.session.query(ApiLogs)
+                .filter_by(address_id=address_record.id, type_api_id=2)
+                .first()
+            )
+            if api_response_from_logs:
+                return api_response_from_logs.response_payload
         try:
             response_data = self.call_api(
                 address
             )  # Llamamos directamente a NominatimAPI
-            status_code = 200
-            response_time = datetime.now()
 
             # Procesar los datos de la respuesta
             display_name = response_data.get(
@@ -95,26 +93,19 @@ class NominatimAPI:
 
             quality_score = response_data.get("addresstype")
 
-            # Buscar o crear el registro de dirección
-            if update:
-                address_record = (
-                    self.session.query(Address).filter_by(full_address=address).first()
-                )
-                if not address_record:
-                    address_record = Address(full_address=address)
-                    self.session.add(address_record)
-                    self.session.commit()
-
-            # Registrar en AddressScore            
-            insert_or_update_address_score(address_record.id, "Nominatim", quality_score)
+            # Registrar en AddressScore
+            insert_or_update_address_score(
+                address_record.id, "Nominatim", quality_score
+            )
 
             # Registrar en ApiLogs
+            response_time = datetime.now()
             api_log = ApiLogs(
                 address_id=address_record.id,
                 request_payload=address,
                 response_payload=response_data,
                 created_at=datetime.now(),
-                status_code=status_code,
+                status_code=200,
                 response_time_ms=(datetime.now() - response_time).microseconds // 1000,
             )
             self.session.add(api_log)

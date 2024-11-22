@@ -114,7 +114,9 @@ class GoogleMapsAPI:
                     self.session.flush()
 
                 # Registrar en la tabla `AddressScore`
-                insert_or_update_address_score(address_record.id, "Google", quality_score)
+                insert_or_update_address_score(
+                    address_record.id, "Google", quality_score
+                )
 
                 # Definir los atributos importantes a extraer del response de Nominatim
 

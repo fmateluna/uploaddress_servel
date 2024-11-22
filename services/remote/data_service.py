@@ -50,8 +50,11 @@ class DataService:
 
         # Ejecutar ambas llamadas a process_address en paralelo, ignorando errores individuales
         results = await asyncio.gather(
-            self.process_address("google", address=address, new_address=new_address),
-            self.process_address("nominatim", address=address, new_address=new_address),
+            self.process_address("Google", address=address, new_address=new_address),
+            self.process_address("Nominatim", address=address, new_address=new_address),
+            self.process_address(
+                "Localidades", address=address, new_address=new_address
+            ),
             return_exceptions=True,
         )
 

@@ -1,6 +1,7 @@
 from repositories.database import get_session
 from sqlalchemy import create_engine, text
 
+
 def fetch_report_by_process_id(process_id):
     query = text(
         """
@@ -73,11 +74,15 @@ def fetch_report_by_process_id(process_id):
 
     # Iniciar la sesión y ejecutar la consulta
     with get_session() as session:
-        result = session.execute(query, {"process_id": int(process_id)}).fetchall()  # fetchall() para obtener todos los resultados
+        result = session.execute(
+            query, {"process_id": int(process_id)}
+        ).fetchall()  # fetchall() para obtener todos los resultados
 
     # Si obtenemos resultados, los convertimos en diccionarios
     if result:
-        result_list = [dict(row._asdict()) for row in result]  # Convierte cada fila de resultado en un diccionario
+        result_list = [
+            dict(row._asdict()) for row in result
+        ]  # Convierte cada fila de resultado en un diccionario
         return result_list
     else:
         return None
