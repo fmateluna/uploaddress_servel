@@ -11,12 +11,11 @@ class DataService:
 
     def __init__(self):
         self.session = get_session()
-        self.new_address = False
 
-    async def process_address(
-        self, api_name: str, address: str, new_address: bool = False
-    ):
-        self.new_address = new_address
+        self.addres_repo = AddressRepository(self.session)
+
+    async def process_address(self, api_name: str, address: str):
+
         geo_service = GeolocationService(api_name)
 
         geolocation_data = await geo_service.get_geolocation(address)
@@ -43,18 +42,18 @@ class DataService:
                 print(f"Address '{address}' ya existe en la base de datos.")
 
     async def generate_info_address(
-        self, address: str, remote_ip: str, new_address: bool = False
+        self, full_address: str, remote_ip: str, new_address: bool = False
     ):
         if new_address:
-            await self._save_address(address, remote_ip)
+            await self._save_address(full_address, remote_ip)
 
-        # Ejecutar ambas llamadas a process_address en paralelo, ignorando errores individuales
+        address_record = self.addres_repo.get_address_by_full_address(full_address)
+
+        # Ejecutar todas las llamadas a process_address en paralelo, ignorando errores individuales
         results = await asyncio.gather(
-            self.process_address("Google", address=address, new_address=new_address),
-            self.process_address("Nominatim", address=address, new_address=new_address),
-            self.process_address(
-                "Localidades", address=address, new_address=new_address
-            ),
+            self.process_address("Google", address=address_record),
+            self.process_address("Nominatim", address=address_record),
+            self.process_address("Localidades", address=address_record),
             return_exceptions=True,
         )
 
@@ -63,7 +62,7 @@ class DataService:
             if isinstance(result, Exception):
                 print(f"Error en una de las APIs: {result}")
 
-        result = fetch_address_details(address)
+        result = fetch_address_details(full_address)
         if result:
             return jsonable_encoder(result)
         else:

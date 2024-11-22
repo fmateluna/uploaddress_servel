@@ -181,10 +181,7 @@ async def process_csv_endpoint(
         # Leer el archivo CSV
         csv_content = await csv_file.read()
 
-        fecha_hora_actual = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        id_process = insert_origin_source(
-            "Via Web : " + fecha_hora_actual + " desde " + ip
-        )
+        id_process = insert_origin_source(csv_file.filename)
 
         # Llamar a la función process_csv en segundo plano
         background_tasks.add_task(
@@ -224,7 +221,7 @@ async def process_csv_from_web(config, csv_content, ip, origin_source_id):
 
         for _, row in data.iterrows():
             address_data, score = build_address_components(address_format, row)
-
+            # api_flag : Solo valor de refencia, para determinar si vale la pena "apigeocidificarlo"
             address_data["api_flag"] = int(score) > 50
 
             print("[!] Calidad del dato :", score)
@@ -242,7 +239,7 @@ async def process_csv_from_web(config, csv_content, ip, origin_source_id):
 
             # Guardar en la tabla address
             address_id = save_address(columns, values_placeholders, address_data)
-
+            # TODO : si es -1 es porque no se pudo grabar, controlar eso como error
             if address_id > -1:
                 link_address_to_origin_source(address_id, origin_source_id)
                 print("[" + address_data["full_address"] + "]  is OK \n")
@@ -255,6 +252,7 @@ async def process_csv_from_web(config, csv_content, ip, origin_source_id):
             await data_service.generate_info_address(
                 address_data["full_address"], ip, False
             )
+
             print("[" + address_data["full_address"] + "]  process api coords \n")
     except Exception as e:
         print("Error al procesar CSV:", e)

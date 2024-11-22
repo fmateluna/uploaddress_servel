@@ -32,12 +32,7 @@ class GoogleMapsAPI:
         )
         self.session.add(api_response)
 
-    def get_geolocation(self, address: str, update: bool = False) -> dict:
-        self.update = update
-        # Verifica si ya existe una entrada para la dirección en la base de datos
-        address_record = (
-            self.session.query(Address).filter_by(full_address=address).first()
-        )
+    def get_geolocation(self, address_record: Address) -> dict:
 
         # Si existe y no se solicita una actualización, se devuelve el último response almacenado
         if address_record:
@@ -72,14 +67,18 @@ class GoogleMapsAPI:
 
         # Procesar y registrar los datos de la respuesta
         self._register_api_response(
-            address, params, response_data, status_code, response_time
+            address_record,
+            params,
+            response_data,
+            status_code,
+            response_time,
         )
 
         return response_data
 
     def _register_api_response(
         self,
-        original_address: str,
+        address_record: Address,
         request_payload: dict,
         response_data: dict,
         status_code: int,
@@ -102,16 +101,6 @@ class GoogleMapsAPI:
             quality_score = result["geometry"].get("location_type")
 
             try:
-                # Busca o crea la dirección en la tabla 'address'
-                address_record = (
-                    self.session.query(Address)
-                    .filter_by(full_address=original_address)
-                    .first()
-                )
-                if not address_record and self.update:
-                    address_record = Address(full_address=full_address)
-                    self.session.add(address_record)
-                    self.session.flush()
 
                 # Registrar en la tabla `AddressScore`
                 insert_or_update_address_score(

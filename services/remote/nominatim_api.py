@@ -44,12 +44,8 @@ class NominatimAPI:
 
         return data[0]  # Toma el primer resultado en caso de varios
 
-    def get_geolocation(self, address: str, update: bool = False):
+    def get_geolocation(self, address_record: Address) -> dict:
         # Verifica si ya existe una entrada para la dirección en la base de datos
-
-        address_record = (
-            self.session.query(Address).filter_by(full_address=address).first()
-        )
 
         # Si existe y no se solicita una actualización, se devuelve el último response almacenado
         if address_record:
@@ -62,7 +58,7 @@ class NominatimAPI:
                 return api_response_from_logs.response_payload
         try:
             response_data = self.call_api(
-                address
+                address_record.full_address
             )  # Llamamos directamente a NominatimAPI
 
             # Procesar los datos de la respuesta
@@ -102,7 +98,7 @@ class NominatimAPI:
             response_time = datetime.now()
             api_log = ApiLogs(
                 address_id=address_record.id,
-                request_payload=address,
+                request_payload=address_record.full_address,
                 response_payload=response_data,
                 created_at=datetime.now(),
                 status_code=200,

@@ -57,6 +57,14 @@ class AddressRepository:
         """Recupera una dirección de la tabla Address por su ID."""
         return self.db_session.query(Address).filter(Address.id == address_id).first()
 
+    def get_address_by_full_address(self, full_address: str):
+        """Recupera una dirección de la tabla Address por su full_address."""
+        return (
+            self.db_session.query(Address)
+            .filter(Address.full_address == full_address)
+            .first()
+        )
+
     def update_geolocation(self, address_id: int, geolocation_data: dict):
         """Actualiza los datos de geolocalización de una dirección existente."""
         address = self.get_address_by_id(address_id)

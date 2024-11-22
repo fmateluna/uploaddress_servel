@@ -140,32 +140,23 @@ class LocalidadesAPI:
             self.session.rollback()
             raise
 
-    def get_geolocation(self, address: str, update: bool = False):
+    def get_geolocation(self, address_record: Address) -> dict:
         try:
             # Llamamos a `fetch_location_details` para obtener los detalles de la localización
-            response_data = self.fetch_location_details(direccion=address)
-
-            address_record = (
-                self.session.query(Address).filter_by(full_address=address).first()
+            response_data = self.fetch_location_details(
+                direccion=address_record.full_address
             )
-
-            # Buscar o crear el registro de dirección
-            if update:
-                if not address_record:
-                    address_record = Address(full_address=address)
-                    self.session.add(address_record)
-                    self.session.commit()
 
             if not response_data:
                 raise ValueError(
-                    f"No se encontró información para la dirección: {address}"
+                    f"No se encontró información para la dirección: {address_record.full_address}"
                 )
 
             # Registrar en ApiLogs
             response_time = datetime.now()
             api_log = ApiLogs(
                 address_id=address_record.id,
-                request_payload=address,
+                request_payload=address_record.full_address,
                 response_payload=response_data,
                 created_at=datetime.now(),
                 status_code=200,

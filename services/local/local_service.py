@@ -134,11 +134,11 @@ def process_csv(config_path):
                 }
                 insert_into_input_request(address_id, input_type_id, attributes)
 
-                # Acá invocar a APIS para a partir de address_id enviar consultas a API
             else:
                 print("[" + address_data["full_address"] + "]  is OK \n")
 
             if int(score) > 50:
+                # Acá invocar a APIS para a partir de address_id enviar consultas a API
                 asyncio.run(
                     data_service.generate_info_address(
                         address_data["full_address"], "127.0.0.1"
