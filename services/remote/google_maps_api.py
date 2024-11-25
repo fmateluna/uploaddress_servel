@@ -48,7 +48,7 @@ class GoogleMapsAPI:
                 return api_response.response_payload
 
         url = "https://maps.googleapis.com/maps/api/geocode/json"
-        params = {"address": address, "key": GOOGLE_API_KEY}
+        params = {"address": address_record.full_address, "key": GOOGLE_API_KEY}
 
         # Registrar el inicio de la solicitud para calcular el tiempo de respuesta
         start_time = time.time()

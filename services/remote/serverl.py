@@ -42,9 +42,9 @@ def get_localidad_session():
         session.close()
 
 
-class LocalidadesAPI:
+class ServelDataBase:
 
-    def fetch_location_details(self, direccion: str):
+    def tipo_geo_localidades(self, direccion: str):
         query = text(
             """
             WITH similarity_scores AS (
@@ -142,10 +142,11 @@ class LocalidadesAPI:
 
     def get_geolocation(self, address_record: Address) -> dict:
         try:
-            # Llamamos a `fetch_location_details` para obtener los detalles de la localización
-            response_data = self.fetch_location_details(
-                direccion=address_record.full_address
-            )
+
+            if address_record.servel_tipo_geo == "Localidades":
+                response_data = self.tipo_geo_localidades(
+                    direccion=address_record.full_address
+                )
 
             if not response_data:
                 raise ValueError(
@@ -184,9 +185,7 @@ class LocalidadesAPI:
             quality_score = response_data.get("score")
 
             # Registrar en AddressScore
-            insert_or_update_address_score(
-                address_record.id, "Localidades", quality_score
-            )
+            insert_or_update_address_score(address_record.id, "Servel", quality_score)
             self.session.commit()
             return response_data
 

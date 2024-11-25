@@ -53,7 +53,7 @@ class DataService:
         results = await asyncio.gather(
             self.process_address("Google", address=address_record),
             self.process_address("Nominatim", address=address_record),
-            self.process_address("Localidades", address=address_record),
+            self.process_address("Servel", address=address_record),
             return_exceptions=True,
         )
 

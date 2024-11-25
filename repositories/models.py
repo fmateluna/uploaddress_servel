@@ -66,6 +66,7 @@ class Address(Base):
     ip_address = Column(INET)
     house_number = Column(String(50))
     complements = Column(String(100))
+    servel_tipo_geo = Column(String(100))
     neighbourhood = Column(String(100))
     sector = Column(String(100))
     commune = Column(String(100))
