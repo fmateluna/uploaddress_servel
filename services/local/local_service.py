@@ -139,11 +139,7 @@ def process_csv(config_path):
 
             if int(score) > 50:
                 # Acá invocar a APIS para a partir de address_id enviar consultas a API
-                asyncio.run(
-                    data_service.generate_info_address(
-                        address_data["full_address"], "127.0.0.1"
-                    )
-                )
+                asyncio.run(data_service.generate_info_address(address_id))
                 print("[" + address_data["full_address"] + "]  process api coords \n")
 
         except Exception as e:

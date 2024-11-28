@@ -202,6 +202,7 @@ def generate_process_id(ip):
 
 # Función para procesar el CSV en segundo plano
 async def process_csv_from_web(config, csv_content, ip, origin_source_id):
+    # TODO : queda pendiente donde guardaremos la IP
     try:
         # Cargar los datos del CSV en un DataFrame
         from io import StringIO
@@ -239,21 +240,13 @@ async def process_csv_from_web(config, csv_content, ip, origin_source_id):
 
             # Guardar en la tabla address
             address_id = save_address(columns, values_placeholders, address_data)
-            # TODO : si es -1 es porque no se pudo grabar, controlar eso como error
-            if address_id > -1:
-                link_address_to_origin_source(address_id, origin_source_id)
-                print("[" + address_data["full_address"] + "]  is OK \n")
-                insert_or_update_address_score(address_id, "CargaCSV", score)
-                attributes = {
-                    attr: row[attr] for attr in input_attributes if attr in row
-                }
-                insert_into_input_request(address_id, input_type_id, attributes)
 
-            await data_service.generate_info_address(
-                address_data["full_address"], ip, False
-            )
-
-            print("[" + address_data["full_address"] + "]  process api coords \n")
+            link_address_to_origin_source(address_id, origin_source_id)
+            print("[" + address_data["full_address"] + "]  is OK \n")
+            insert_or_update_address_score(address_id, "CargaCSV", score)
+            attributes = {attr: row[attr] for attr in input_attributes if attr in row}
+            insert_into_input_request(address_id, input_type_id, attributes)
+            await data_service.generate_info_address(address_id)
     except Exception as e:
         print("Error al procesar CSV:", e)
 

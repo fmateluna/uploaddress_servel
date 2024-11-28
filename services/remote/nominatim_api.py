@@ -1,12 +1,11 @@
-import os
 import requests
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
-import time
 
 from repositories.address_score_repo import insert_or_update_address_score
 from repositories.database import get_session
-from repositories.models import Address, AddressScore, ApiLogs, ApiResponseValues
+from repositories.models import Address, ApiLogs, ApiResponseValues
+from services.remote.common import ResponseGeo
 
 
 class NominatimAPI:
@@ -44,9 +43,9 @@ class NominatimAPI:
 
         return data[0]  # Toma el primer resultado en caso de varios
 
-    def get_geolocation(self, address_record: Address) -> dict:
-        # Verifica si ya existe una entrada para la dirección en la base de datos
-
+    def get_geolocation(self, address_record: Address) -> ResponseGeo:
+        response_geo_nominatim = ResponseGeo()
+        response_geo_nominatim.origen = ""
         # Si existe y no se solicita una actualización, se devuelve el último response almacenado
         if address_record:
             api_response_from_logs = (
@@ -117,13 +116,18 @@ class NominatimAPI:
                 address_record.id, "address", display_name, api_log.id
             )
 
+            response_geo_nominatim.latitud = latitude
+            response_geo_nominatim.longitud = longitude
+            response_geo_nominatim.address = display_name
+            response_geo_nominatim.origen = "Nominatim"
+
             self.session.commit()
-            return response_data
+            return response_geo_nominatim
 
         except SQLAlchemyError as e:
             self.session.rollback()
             print(f"Error en la base de datos: {str(e)}")
-            return f"{str(e)}"
+            return response_geo_nominatim
         except Exception as e:
             print(f"Error en la llamada a Nominatim: {str(e)}")
-            return f"{str(e)}"
+            return response_geo_nominatim

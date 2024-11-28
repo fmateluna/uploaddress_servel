@@ -219,9 +219,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <strong>* Tipo GEO</strong><small id="result_esquema"></small>
-                            <div title="Ejemplo: LOCALIDAD, EXACTO, CALLE, NO GEO, PROXIMIDAD, SIN TIPO, FUERA COMUNA, AUTOGEO, RECINTO NO GEO"
-                                class="drop-area" data-column="servel_schema"></div>
+                            <strong>* Tipo GEO</strong><small id="result_servel_tipo_geo"></small>
+                            <div class="drop-area" data-column="servel_tipo_geo"></div>
                         </div>
                         <div class="mb-3">
                             <small style="background-color:gold"> *: Campos necesarios para consultar en
@@ -357,12 +356,12 @@
 
             try {
                 // Enviar la solicitud POST con los archivos al endpoint
-                const response = await fetch('/process_csv/', {
+                const response = fetch('/process_csv/', {
                     method: 'POST',
                     body: formData,
                 });
 
-                const result = await response.json();
+                const result = response.json();
                 if (response.ok) {
                     showMessageOK(result);
                 } else {

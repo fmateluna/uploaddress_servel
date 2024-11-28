@@ -6,7 +6,8 @@ import time
 
 from repositories.address_score_repo import insert_or_update_address_score
 from repositories.database import get_session
-from repositories.models import Address, AddressScore, ApiLogs, ApiResponseValues
+from repositories.models import Address, ApiLogs, ApiResponseValues
+from services.remote.common import ResponseGeo
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
@@ -32,8 +33,9 @@ class GoogleMapsAPI:
         )
         self.session.add(api_response)
 
-    def get_geolocation(self, address_record: Address) -> dict:
-
+    def get_geolocation(self, address_record: Address) -> ResponseGeo:
+        response_geo_google = ResponseGeo()
+        response_geo_google.origen = ""
         # Si existe y no se solicita una actualización, se devuelve el último response almacenado
         if address_record:
             print(
@@ -66,24 +68,24 @@ class GoogleMapsAPI:
         response_time = int((time.time() - start_time) * 1000)  # en milisegundos
 
         # Procesar y registrar los datos de la respuesta
-        self._register_api_response(
+        response_geo_google = self._create_geo_response_from_api(
             address_record,
             params,
             response_data,
             status_code,
             response_time,
         )
+        return response_geo_google
 
-        return response_data
-
-    def _register_api_response(
+    def _create_geo_response_from_api(
         self,
         address_record: Address,
         request_payload: dict,
         response_data: dict,
         status_code: int,
         response_time: int,
-    ):
+    ) -> ResponseGeo:
+        response_geo_google = ResponseGeo()
         # Extraer y registrar la información relevante
         if response_data.get("status") == "OK":
             result = response_data["results"][0]  # Toma el primer resultado
@@ -124,6 +126,11 @@ class GoogleMapsAPI:
                 latitude = result["geometry"]["location"]["lat"]
                 longitude = result["geometry"]["location"]["lng"]
 
+                response_geo_google.latitud = latitude
+                response_geo_google.longitud = longitude
+                response_geo_google.address = full_address
+                response_geo_google.origen = "Google"
+
                 # Usar el método auxiliar para guardar los atributos en `ApiResponse`
                 # address_id, attribute_name, attribute_value, created_at, api_logs_id
                 self._save_api_response_attribute(
@@ -144,8 +151,12 @@ class GoogleMapsAPI:
                 self.session.rollback()
                 # Opcional: Loggear el error o manejarlo según tus necesidades
                 print(f"Error al hacer commit en la base de datos: {e}")
-                # Puedes lanzar la excepción nuevamente si necesitas que el error se propague
+                response_geo_google.origen = ""
                 raise
+            return response_geo_google
+        else:
+            response_geo_google.origen = ""
+            return response_geo_google
 
     def _log_error(
         self,

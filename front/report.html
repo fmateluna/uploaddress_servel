@@ -44,11 +44,11 @@
         // Function to fetch data from the endpoint
         async function fetchData() {
             try {
-                const response = await fetch(endpointUrl);
+                const response =  fetch(endpointUrl);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-                return await response.json();
+                return  response.json();
             } catch (error) {
                 // Handle errors
                 console.error('Error fetching data:', error);
@@ -101,7 +101,7 @@
 
         // Fetch data and render the table
         async function init() {
-            const data = await fetchData();
+            const data =  fetchData();
             if (data) {
                 renderTable(data);
             }

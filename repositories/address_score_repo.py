@@ -9,7 +9,7 @@ update_address_score_query = load_query("update_address_score.sql")
 
 def insert_or_update_address_score(address_id, quality_label, score):
     # Conectar a la base de datos
-    
+
     conn = psycopg2.connect(**DB_CONFIG)
     cursor = conn.cursor()
     try:
@@ -19,15 +19,18 @@ def insert_or_update_address_score(address_id, quality_label, score):
 
         if result:
             # Actualizar el registro existente
-            cursor.execute(update_address_score_query, (score, address_id, quality_label))
+            cursor.execute(
+                update_address_score_query, (score, address_id, quality_label)
+            )
             conn.commit()
             print(f"Puntaje Actualizado {address_id} {quality_label} {score}")
         else:
             # Insertar un nuevo registro de puntuación
-            cursor.execute(insert_address_score_query, (address_id, quality_label, score))
+            cursor.execute(
+                insert_address_score_query, (address_id, quality_label, score)
+            )
             conn.commit()
-            print(f"Nuevo Puntaje {address_id} {quality_label} {score}")
-            
+            # print(f"Nuevo Puntaje {address_id} {quality_label} {score}")
 
         # Cerrar la conexión
         cursor.close()

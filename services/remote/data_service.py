@@ -4,53 +4,63 @@ from repositories.address_repo import AddressRepository
 from repositories.database import get_session
 from repositories.models import Address
 from repositories.report_repo import fetch_address_details, fetch_report_by_process_id
-from services.remote.geolocation_service import GeolocationService
+from services.remote.geo_factory import GeolocationService
+from services.remote.common import ResponseGeo
 
 
 class DataService:
 
     def __init__(self):
         self.session = get_session()
-
         self.addres_repo = AddressRepository(self.session)
 
-    async def process_address(self, api_name: str, address: str):
-
+    def process_address(self, api_name: str, address: str) -> ResponseGeo:
         geo_service = GeolocationService(api_name)
+        response_geo = geo_service.get_geolocation(address)
+        return response_geo
 
-        geolocation_data = await geo_service.get_geolocation(address)
-        return geolocation_data
+    # Procesar las direcciones de forma secuencial
+    def process_sequentially(self, address_record):
+        responses = {}
 
-    async def _save_address(self, address: str, remote_ip: str):
-        if self.new_address:
-            # Verificar si la dirección ya existe
-            existing_address = (
-                self.session.query(Address)
-                .filter_by(full_address=address, input_type_id=8)
-                .first()
-            )
+        try:
+            # Ejecutar Servel
+            servel_result = self.process_address("Servel", address=address_record)
 
-            # Si no existe, proceder a agregarla
-            if not existing_address:
-                address_from_endpoint = Address(
-                    full_address=address, input_type_id=8, ip_address=remote_ip
-                )
-                self.session.add(address_from_endpoint)
-                self.session.commit()  # Confirmar los cambios en la base de datos
-                print(f"Address '{address}' registrada exitosamente.")
+            responses["Servel"] = servel_result
+            if servel_result.origen != "":
+                print(f"Respuesta de Servel: {servel_result.address}")
             else:
-                print(f"Address '{address}' ya existe en la base de datos.")
+                # Ejecutar Nominatim
+                nominatim_result = self.process_address(
+                    "Nominatim", address=address_record
+                )
+                responses["Nominatim"] = nominatim_result
+                print(f"Respuesta de Nominatim: {nominatim_result.address}")
 
-    async def generate_info_address(
-        self, full_address: str, remote_ip: str, new_address: bool = False
-    ):
-        if new_address:
-            await self._save_address(full_address, remote_ip)
+            """
+            # Ejecutar Google
+            google_result =  self.process_address("Google", address=address_record)
+            responses["Google"] = google_result
+            print(f"Respuesta de Google: {google_result}")
+            """
+        except Exception as e:
+            print(f"Error durante la ejecución de las APIs: {e}")
 
-        address_record = self.addres_repo.get_address_by_full_address(full_address)
+        return responses
 
+    async def generate_info_address(self, address_id: int):
+
+        address_record = self.addres_repo.get_address_by_id(address_id)
+
+        # TODO : Ir en secuencias segun resultado
         # Ejecutar todas las llamadas a process_address en paralelo, ignorando errores individuales
-        results = await asyncio.gather(
+
+        responses = self.process_sequentially(address_record)
+
+        """
+        #Forma antigua de ejecutar, se conserva en caso de volver
+        results =  asyncio.gather(
             self.process_address("Google", address=address_record),
             self.process_address("Nominatim", address=address_record),
             self.process_address("Servel", address=address_record),
@@ -61,8 +71,9 @@ class DataService:
         for result in results:
             if isinstance(result, Exception):
                 print(f"Error en una de las APIs: {result}")
+        """
 
-        result = fetch_address_details(full_address)
+        result = fetch_address_details(address_record.full_address)
         if result:
             return jsonable_encoder(result)
         else:
