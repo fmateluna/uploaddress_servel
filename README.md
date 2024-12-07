@@ -19,3 +19,8 @@ http://localhost:8000/geolocation/?api_name=google&address=VALPARA%C3%8DSO%20VI%
 1. **Instalar dependencias**:
    ```bash
    pip install -r requirements.txt
+
+
+Para subir el servidor :
+
+ uvicorn api.main:app --host 0.0.0.0 --port 8000

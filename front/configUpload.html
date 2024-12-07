@@ -332,6 +332,20 @@
 
         }
 
+        function sendFetchRequest(url, options) {
+            return new Promise((resolve, reject) => {
+                fetch(url, options)
+                    .then(response => {
+                        if (!response.ok) {
+                            // Si el estado no es ok, se lanza un error con el detalle
+                            return response.json().then(err => reject(err));
+                        }
+                        // Si la respuesta es correcta, la procesamos como JSON
+                        return response.json().then(resolve);
+                    })
+                    .catch(error => reject(error));
+            });
+        }
 
 
         async function sendCSV(event) {
@@ -356,7 +370,7 @@
 
             try {
                 // Enviar la solicitud POST con los archivos al endpoint
-                const response = fetch('/process_csv/', {
+                const response = await sendFetchRequest('/process_csv/', {
                     method: 'POST',
                     body: formData,
                 });
